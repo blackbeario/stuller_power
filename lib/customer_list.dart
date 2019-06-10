@@ -98,7 +98,7 @@ class Customers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var customers = Provider.of<List<Customer>>(context);
-    var user = Provider.of<FirebaseUser>(context);
+    // var user = Provider.of<FirebaseUser>(context);
     if (customers == null) {
       return Center(
         child: CupertinoActivityIndicator(
@@ -109,37 +109,110 @@ class Customers extends StatelessWidget {
     else return ListView(
       shrinkWrap: true,
       children: customers.map((customer) {
-        return Dismissible(
-          direction: DismissDirection.endToStart,
-          key: Key(customer.id),
-          onDismissed: (direction) {
-            DatabaseService().removeLocation(user, customer.id);
-          },
-          child: Card(
-            margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-            child: Container(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  ListTile(
-                    leading: Icon(Icons.home),
-                    title: Text(customer.firstName),
-                    subtitle: Text(customer.lastName),
-                    // onTap: () => ,
+        return Material(
+          // margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+          child: Container(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                InkWell(
+                  onTap: () {
+                    // TODO: show on map! :)
+                    // _requestPop(customer, context);
+                  },
+                  onDoubleTap: () {
+                    Navigator.of(context).push(
+                      CupertinoPageRoute(builder: (context) {
+                        return CustomerDetails(customer);
+                      }),
+                    );
+                  },
+                  onLongPress: () {_requestPop(customer, context);},
+                  child: ListTile(
+                    // TODO: Change leading to area icon/color.
+                    leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
+                    title: Text(customer.firstName + ' ' + customer.lastName),
+                    subtitle: Text(customer.email),
+                    trailing: Icon(Icons.phone, color: Colors.green),
                   ),
-                ],
-              ),
+                ),            
+                Divider()
+              ],
             ),
-          ),
-          background: Container(
-            decoration: BoxDecoration(color: Colors.red), 
-            child: Align(
-              alignment: Alignment.centerRight, 
-              child: Icon(Icons.delete, color: Colors.white, size: 40),
-            ),
-          ),
+          )
         );
       }).toList(),
     ); 
   }
+
+  Future<bool> _requestPop(customer, BuildContext context) {
+    showCupertinoDialog(context: context, builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text('Call ' + customer.firstName + ' ' + customer.lastName + '?'),
+        actions: <Widget>[
+          CupertinoDialogAction(
+            child: Text('Okay'),
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Discard');
+              auth.signOut();
+            }
+          ),
+          CupertinoDialogAction(
+            child: Text('Cancel'),
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Cancel');
+            },
+          ),
+        ],
+      );
+    });
+    return new Future.value(false);
+  }
 }
+
+
+class CustomerDetails extends StatefulWidget {
+  final Customer customer;
+  const CustomerDetails(this.customer);
+
+  @override
+  _CustomerDetailsState createState() => _CustomerDetailsState();
+}
+
+class _CustomerDetailsState extends State<CustomerDetails> {
+  final db = DatabaseService();
+
+  @override
+  Widget build(BuildContext context) {
+    return CupertinoPageScaffold(
+      resizeToAvoidBottomInset: true,
+      backgroundColor: CupertinoColors.extraLightBackgroundGray,
+      navigationBar: CupertinoNavigationBar(
+        middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
+      ),
+      child: Card(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: EdgeInsets.all(20.0),
+        child: Container(
+          child: Padding(
+            padding: EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                ListTile(
+                  leading: Icon(Icons.info),
+                  subtitle:  Text('${widget.customer.email}'),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+

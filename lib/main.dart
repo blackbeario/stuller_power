@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:providerlogin/login_page.dart';
-import 'package:providerlogin/models/auth_service.dart';
-import 'package:providerlogin/customer_list.dart';
-import 'package:providerlogin/job_list.dart';
-import 'package:providerlogin/profile.dart';
+import 'package:stullerPower/login_page.dart';
+import 'package:stullerPower/models/auth_service.dart';
+import 'package:stullerPower/customer_list.dart';
+import 'package:stullerPower/job_list.dart';
+import 'package:stullerPower/profile.dart';
 import 'package:flutter/cupertino.dart';
 
 void main() => runApp(MyApp());

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
-import 'package:providerlogin/models/auth_service.dart';
+import 'package:stullerPower/models/auth_service.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:providerlogin/main.dart';
+import 'package:stullerPower/main.dart';
 
 class LoginPage extends StatefulWidget {
   createState() => LoginPageState();
@@ -10,6 +10,14 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   AuthService auth = AuthService();
+  bool _hidePassword = true;
+
+  // Toggles the password show status
+  void _toggle() {
+    setState(() {
+      _hidePassword = !_hidePassword;
+    });
+  }
 
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
   TextEditingController _email;
@@ -54,9 +62,10 @@ class LoginPageState extends State<LoginPage> {
                     shrinkWrap: true,
                     children: <Widget>[
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.all(16.0),
                         child: CupertinoTextField(
                           controller: _email,
+                          padding: EdgeInsets.all(10.0),
                           // validator: (value) =>
                               // (value.isEmpty) ? "Please Enter Email" : null,
                           placeholder: "email",
@@ -64,13 +73,19 @@ class LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.all(16.0),
+                        padding: EdgeInsets.all(16.0),
                         child: CupertinoTextField(
+                          padding: EdgeInsets.all(10.0),
                           controller: _password,
-                          // validator: (value) =>
-                          //     (value.isEmpty) ? "Please Enter Password" : null,
                           placeholder: "password",
+                          obscureText: _hidePassword,
                           style: TextStyle(color: CupertinoColors.white),
+                          suffix: FlatButton(
+                            textColor: CupertinoColors.inactiveGray,
+                            color: Colors.transparent,
+                            onPressed: _toggle,
+                            child: Icon(_hidePassword ? Icons.lock : Icons.lock_open)
+                          ),
                         ),
                       ),
                       Padding(
