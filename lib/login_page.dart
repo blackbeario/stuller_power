@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:providerlogin/model/user_repository.dart';
+// import 'package:provider/provider.dart';
+import 'package:providerlogin/models/auth_service.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:providerlogin/main.dart';
 
 class LoginPage extends StatefulWidget {
-  @override
-  _LoginPageState createState() => _LoginPageState();
+  createState() => LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class LoginPageState extends State<LoginPage> {
+  AuthService auth = AuthService();
+
   TextStyle style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
   TextEditingController _email;
   TextEditingController _password;
@@ -19,102 +22,89 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _email = TextEditingController(text: "");
     _password = TextEditingController(text: "");
+    auth.getUser.then(
+      (user) {
+        if (user != null) {
+          return UserInfoPage();
+        }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserRepository>(context);
-    return Scaffold(
+    // final user = Provider.of<AuthService>(context);
+    return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.darkBackgroundGray,
       key: _key,
-      appBar: AppBar(
-        title: Text("Demo"),
-      ),
-      body: Form(
-        key: _formKey,
-        child: Center(
-          child: ListView(
-            shrinkWrap: true,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextFormField(
-                  controller: _email,
-                  validator: (value) =>
-                      (value.isEmpty) ? "Please Enter Email" : null,
-                  style: style,
-                  decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.email),
-                      labelText: "Email",
-                      border: OutlineInputBorder()),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextFormField(
-                  controller: _password,
-                  validator: (value) =>
-                      (value.isEmpty) ? "Please Enter Password" : null,
-                  style: style,
-                  decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock),
-                      labelText: "Password",
-                      border: OutlineInputBorder()),
-                ),
-              ),
-              user.status == Status.Authenticating
-                  ? Center(child: CircularProgressIndicator())
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Material(
-                        elevation: 5.0,
-                        borderRadius: BorderRadius.circular(30.0),
-                        color: Colors.red,
-                        child: MaterialButton(
-                          onPressed: () async {
-                            if (_formKey.currentState.validate()) {
-                              if (!await user.signIn(
-                                  _email.text, _password.text))
-                                _key.currentState.showSnackBar(SnackBar(
-                                  content: Text("Something is wrong"),
-                                ));
-                            }
-                          },
-                          child: Text(
-                            "Sign In",
-                            style: style.copyWith(
+      child: Container(
+        padding: EdgeInsets.all(30),
+        decoration: BoxDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        
+          children: <Widget>[
+            FlutterLogo(size: 150),
+            SafeArea(
+              child: Form(
+                key: _formKey,
+                child: Center(
+                  child: ListView(
+                    shrinkWrap: true,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: CupertinoTextField(
+                          controller: _email,
+                          // validator: (value) =>
+                              // (value.isEmpty) ? "Please Enter Email" : null,
+                          placeholder: "email",
+                          style: TextStyle(color: CupertinoColors.white),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: CupertinoTextField(
+                          controller: _password,
+                          // validator: (value) =>
+                          //     (value.isEmpty) ? "Please Enter Password" : null,
+                          placeholder: "password",
+                          style: TextStyle(color: CupertinoColors.white),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 16.0),
+                        child: Material(
+                          elevation: 5.0,
+                          borderRadius: BorderRadius.circular(10.0),
+                          color: Colors.green,
+                          child: CupertinoButton(
+                            onPressed: () async {
+                              if (_formKey.currentState.validate()) {
+                                var user = await auth.signIn(
+                                  _email.text, _password.text);
+                                if (user != null) {
+                                  return UserInfoPage();
+                                }
+                              }
+                            },
+                            child: Text(
+                              "Sign In",
+                              style: style.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-              SizedBox(height: 20),
-              user.status == Status.Authenticating
-                  ? Center(child: CircularProgressIndicator())
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Material(
-                        elevation: 5.0,
-                        borderRadius: BorderRadius.circular(30.0),
-                        color: Colors.red,
-                        child: MaterialButton(
-                          onPressed: () async {
-                            if (!await user.signInWithGoogle())
-                              _key.currentState.showSnackBar(SnackBar(
-                                content: Text("Something is wrong"),
-                              ));
-                          },
-                          child: Text(
-                            "Sign In With Google",
-                            style: style.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ),
-                    ),
-            ],
-          ),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
