@@ -30,8 +30,8 @@ class DatabaseService {
   }
 
   /// Locations subcollection
-  Stream<List<Location>> streamlocations(FirebaseUser user) {
-    var ref = _db.collection('customers').document(user.uid).collection('locations');
+  Stream<List<Location>> streamlocations(String id) {
+    var ref = _db.collection('customers').document(id).collection('locations');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Location.fromFirestore(doc)).toList());
   }

@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StreamProvider<FirebaseUser>.value(stream: AuthService().user),
+        StreamProvider<FirebaseUser>.value(stream: AuthService().user)
+        // Provider<Location>.value(value: Location())
       ],
       child: CupertinoApp(
         debugShowCheckedModeBanner: false,

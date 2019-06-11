@@ -1,70 +1,13 @@
 // import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import './models/customer.dart';
 import './db_service.dart';
+import './locations_list.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
-
-class LocationsList extends StatelessWidget {
-  final db = DatabaseService();
-  
-  @override
-  Widget build(BuildContext context) {
-    var locations = Provider.of<List<Location>>(context);
-    var user = Provider.of<FirebaseUser>(context);
-
-    if (locations == null) {
-      return Flexible(
-        flex: 1,
-        fit: FlexFit.tight,
-        child: Column(
-          children: <Widget> [
-            Text('No locations. Add one for this customer.'),
-          ],
-        ),
-      );
-    }
-    else {
-      return ListView(
-        shrinkWrap: true,
-        children: locations.map((location) {
-          return Dismissible(
-            direction: DismissDirection.endToStart,
-            key: Key(location.id),
-            onDismissed: (direction) {
-              DatabaseService().removeLocation(user, location.id);
-            },
-            child: Card(
-              margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-              child: Container(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    ListTile(
-                      leading: Icon(Icons.home),
-                      title: Text(location.name.toUpperCase()),
-                      subtitle: Text(location.address),
-                      // onTap: () => ,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            background: Container(
-              decoration: BoxDecoration(color: Colors.red), 
-              child: Align(
-                alignment: Alignment.centerRight, 
-                child: Icon(Icons.delete, color: Colors.white, size: 40),
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    }
-  }
-}
 
 class CustomerList extends StatelessWidget {
   final db = DatabaseService();
@@ -73,6 +16,7 @@ class CustomerList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
         middle: Text('Customers'),
@@ -90,7 +34,7 @@ class CustomerList extends StatelessWidget {
   }
 }
 
-
+// Creates the Customer ListTiles, etc for the CustomerList
 class Customers extends StatelessWidget {
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
@@ -98,7 +42,7 @@ class Customers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var customers = Provider.of<List<Customer>>(context);
-    // var user = Provider.of<FirebaseUser>(context);
+
     if (customers == null) {
       return Center(
         child: CupertinoActivityIndicator(
@@ -107,11 +51,16 @@ class Customers extends StatelessWidget {
       );
     }
     else return ListView(
+      padding: EdgeInsets.all(10),
       shrinkWrap: true,
       children: customers.map((customer) {
-        return Material(
-          // margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+        return Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
           child: Container(
+            color: CupertinoColors.white,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -145,6 +94,7 @@ class Customers extends StatelessWidget {
     ); 
   }
 
+  // Actions for Customer items
   Future<bool> _requestPop(customer, BuildContext context) {
     showCupertinoDialog(context: context, builder: (BuildContext context) {
       return CupertinoAlertDialog(
@@ -155,7 +105,7 @@ class Customers extends StatelessWidget {
             isDestructiveAction: true,
             onPressed: () {
               Navigator.pop(context, 'Discard');
-              auth.signOut();
+              // auth.signOut();
             }
           ),
           CupertinoDialogAction(
@@ -173,6 +123,7 @@ class Customers extends StatelessWidget {
 }
 
 
+// Obviously, the Customer Details screen
 class CustomerDetails extends StatefulWidget {
   final Customer customer;
   const CustomerDetails(this.customer);
@@ -183,36 +134,70 @@ class CustomerDetails extends StatefulWidget {
 
 class _CustomerDetailsState extends State<CustomerDetails> {
   final db = DatabaseService();
-
+  
   @override
   Widget build(BuildContext context) {
+    // var customer = Provider.of<Customer>(context);
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       navigationBar: CupertinoNavigationBar(
         middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
+        trailing: CupertinoButton(
+          child: Text('Edit', style: TextStyle(fontSize: 12)),
+          onPressed: () => _editCustomer(context)
+        ),
       ),
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
-        margin: EdgeInsets.all(20.0),
-        child: Container(
-          child: Padding(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                ListTile(
-                  leading: Icon(Icons.info),
-                  subtitle:  Text('${widget.customer.email}'),
-                )
-              ],
+        margin: EdgeInsets.all(10),
+        child: Stack(
+          children: <Widget>[
+            Padding(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  StreamProvider<List<Location>>.value(
+                    stream: db.streamlocations(widget.customer.id),
+                    child: Locations(),
+                  )
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
+  }
+
+   Future<bool> _editCustomer(BuildContext context) {
+    showCupertinoDialog(context: context, builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text('Edit Customer?'),
+        content: Text('Are you sure you really want to update this customer?' 
+          + ' This will affect all instances of this customer on all devices immediately.'),
+        actions: <Widget>[
+          CupertinoDialogAction(
+            child: Text('Yes'),
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Discard');
+            }
+          ),
+          CupertinoDialogAction(
+            child: Text('Cancel'),
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Cancel');
+            },
+          ),
+        ],
+      );
+    });
+    return Future.value(false);
   }
 }
 
