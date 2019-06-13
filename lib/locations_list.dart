@@ -12,7 +12,7 @@ class Locations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var locations = Provider.of<List<Location>>(context);
+    var locations = Provider.of<List<CustomerLocation>>(context);
 
     if (locations == null) {
       return Center(
@@ -23,13 +23,13 @@ class Locations extends StatelessWidget {
       return ListView(
         shrinkWrap: true,
         children: locations.map((location) {
-          final _billing = location.billing;
+          bool _billing = location.billing;
 
           if(locations.length == 1) {
             return Column(
               children: <Widget>[
                 ListTile(
-                  leading: Icon(Icons.location_on),
+                  leading: Icon(Icons.location_on, color: CupertinoColors.destructiveRed),
                   title: Text(location.address + '\n' + location.city + ' ' + location.state + ', ' + location.zipcode),
                 ),
                 ListTile(
@@ -42,7 +42,7 @@ class Locations extends StatelessWidget {
           else {
             return ExpansionTile(
               initiallyExpanded: true,
-              key: PageStorageKey<Location>(location),
+              key: PageStorageKey<CustomerLocation>(location),
               title: Text(location.name),
               children: <Widget>[
                 ListTile(

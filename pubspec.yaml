@@ -23,9 +23,14 @@ dependencies:
   cupertino_icons: ^0.1.2
   font_awesome_flutter: 8.4.0
 
-  firebase_core: ^0.2.5+1
-  firebase_auth: ^0.6.2+1
-  cloud_firestore: ^0.8.2+1
+  firebase_core: ^0.4.0+3
+  firebase_auth: ^0.11.1+6
+  cloud_firestore: ^0.11.0+1
+
+  rxdart: ^0.22.0
+  geoflutterfire: ^2.0.3+4
+  location: 2.3.5
+  google_maps_flutter: ^0.5.16
 
   provider: ^2.0.1
   meta: ^1.1.6

@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+// import 'package:geoflutterfire/geoflutterfire.dart';
+// import 'package:location/location.dart';
 import 'dart:async';
 import './models/customer.dart';
 import './models/user.dart';
@@ -30,10 +32,17 @@ class DatabaseService {
   }
 
   /// Locations subcollection
-  Stream<List<Location>> streamlocations(String id) {
+  Stream<List<CustomerLocation>> streamlocations(String id) {
     var ref = _db.collection('customers').document(id).collection('locations');
     return ref.snapshots().map((list) =>
-      list.documents.map((doc) => Location.fromFirestore(doc)).toList());
+      list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
+  }
+
+  /// Customer markers
+  Stream<List<CustomerMarker>> streamMarkers(String custId) {
+    var ref = _db.collection('customers').document(custId).collection('locations');
+    return ref.snapshots().map((list) =>
+      list.documents.map((doc) => CustomerMarker.fromFirestore(doc)).toList());
   }
 
   /// Jobs collection
@@ -93,4 +102,14 @@ class DatabaseService {
     var ended = done ? $now.millisecondsSinceEpoch : null;
     return await _db.collection('jobs').document(id).updateData({'done': done, 'ended': ended});  
   }
+
+  // Future<DocumentReference> addGeoPoint(FirebaseUser user) async {
+  //   Location location = new Location();
+  //   Geoflutterfire geo = Geoflutterfire();
+  //   var pos = await location.getLocation();
+  //   GeoFirePoint point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
+  //   return _db.collection('users').document(user.uid).collection('locations').add({ 
+  //     'position': point.data,
+  //   });
+  // }
 }

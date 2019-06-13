@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import './models/customer.dart';
 import './db_service.dart';
 import './locations_list.dart';
+import './customer_map.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 
@@ -24,6 +25,7 @@ class CustomerList extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+          CustomerMap(),
           StreamProvider<List<Customer>>.value(
             stream: db.streamCustomers(),
             child: Customers(),
@@ -50,47 +52,49 @@ class Customers extends StatelessWidget {
         )
       );
     }
-    else return ListView(
-      padding: EdgeInsets.all(10),
-      shrinkWrap: true,
-      children: customers.map((customer) {
-        return Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
-          child: Container(
-            color: CupertinoColors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                InkWell(
-                  onTap: () {
-                    // TODO: show on map! :)
-                    // _requestPop(customer, context);
-                  },
-                  onDoubleTap: () {
-                    Navigator.of(context).push(
-                      CupertinoPageRoute(builder: (context) {
-                        return CustomerDetails(customer);
-                      }),
-                    );
-                  },
-                  onLongPress: () {_requestPop(customer, context);},
-                  child: ListTile(
-                    // TODO: Change leading to area icon/color.
-                    leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
-                    title: Text(customer.firstName + ' ' + customer.lastName),
-                    subtitle: Text(customer.email),
-                    trailing: Icon(Icons.phone, color: Colors.green),
-                  ),
-                ),            
-                Divider()
-              ],
+    else return Expanded(
+      child: ListView(
+        padding: EdgeInsets.all(10),
+        shrinkWrap: true,
+        children: customers.map((customer) {
+          return Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
-          )
-        );
-      }).toList(),
+            margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
+            child: Container(
+              color: CupertinoColors.white,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  InkWell(
+                    onTap: () {
+                      // TODO: show on map! :)
+                      // _requestPop(customer, context);
+                    },
+                    onDoubleTap: () {
+                      Navigator.of(context).push(
+                        CupertinoPageRoute(builder: (context) {
+                          return CustomerDetails(customer);
+                        }),
+                      );
+                    },
+                    onLongPress: () {_requestPop(customer, context);},
+                    child: ListTile(
+                      // TODO: Change leading to area icon/color.
+                      leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
+                      title: Text(customer.firstName + ' ' + customer.lastName),
+                      subtitle: Text(customer.email),
+                      trailing: Icon(Icons.phone, color: Colors.green),
+                    ),
+                  ),
+                  Divider()
+                ],
+              ),
+            )
+          );
+        }).toList(),
+      ),
     ); 
   }
 
@@ -137,7 +141,6 @@ class _CustomerDetailsState extends State<CustomerDetails> {
   
   @override
   Widget build(BuildContext context) {
-    // var customer = Provider.of<Customer>(context);
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
@@ -160,7 +163,7 @@ class _CustomerDetailsState extends State<CustomerDetails> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
-                  StreamProvider<List<Location>>.value(
+                  StreamProvider<List<CustomerLocation>>.value(
                     stream: db.streamlocations(widget.customer.id),
                     child: Locations(),
                   )

@@ -30,7 +30,6 @@ class AuthService with ChangeNotifier {
 
   Future<void> updateUserData(FirebaseUser user) async {
     DocumentReference userRef = _db.collection('users').document(user.uid);
-    
     return userRef.setData({
       'uid': user.uid,
       'lastActivity': DateTime.now()

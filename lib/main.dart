@@ -7,16 +7,19 @@ import 'package:stullerPower/customer_list.dart';
 import 'package:stullerPower/job_list.dart';
 import 'package:stullerPower/profile.dart';
 import 'package:flutter/cupertino.dart';
+import './models/customer.dart';
+import './db_service.dart';
 
 void main() => runApp(MyApp());
+final db = DatabaseService();
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StreamProvider<FirebaseUser>.value(stream: AuthService().user)
-        // Provider<Location>.value(value: Location())
+        StreamProvider<FirebaseUser>.value(stream: AuthService().user),
+        StreamProvider<List<Customer>>.value(stream: db.streamCustomers()),
       ],
       child: CupertinoApp(
         debugShowCheckedModeBanner: false,

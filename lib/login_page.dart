@@ -81,10 +81,8 @@ class LoginPageState extends State<LoginPage> {
                           obscureText: _hidePassword,
                           style: TextStyle(color: CupertinoColors.white),
                           suffix: FlatButton(
-                            textColor: CupertinoColors.inactiveGray,
-                            color: Colors.transparent,
                             onPressed: _toggle,
-                            child: Icon(_hidePassword ? Icons.lock : Icons.lock_open)
+                            child: Icon(_hidePassword ? Icons.lock : Icons.lock_open, color: CupertinoColors.inactiveGray)
                           ),
                         ),
                       ),
