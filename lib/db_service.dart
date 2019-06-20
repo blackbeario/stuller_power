@@ -10,19 +10,19 @@ import './models/job.dart';
 class DatabaseService {
   final Firestore _db = Firestore.instance;
 
-  // Future<Customer> getCustomer(String id) async {
-  //   var snap = await _db.collection('customers').document(id).get();
-  //   return Customer.fromFirestore(snap.data);
-  // }
+  Future<Customer> getCustomer(String id) async {
+    var snap = await _db.collection('customers').document(id).get();
+    return Customer.fromFirestore(snap);
+  }
 
-  // /// Get a stream of a single document
-  // Stream<Customer> streamCustomer(String id) {
-  //   return _db
-  //     .collection('customers')
-  //     .document(id)
-  //     .snapshots()
-  //     .map((snap) => Customer.fromFirestore(doc));
-  // }
+  /// Get a stream of a single document
+  Stream<Customer> streamCustomer(String id) {
+    return _db
+      .collection('customers')
+      .document(id)
+      .snapshots()
+      .map((snap) => Customer.fromFirestore(snap));
+  }
 
   /// Customers collection
   Stream<List<Customer>> streamCustomers() {
@@ -38,11 +38,13 @@ class DatabaseService {
       list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
   }
 
-  /// Customer markers
-  Stream<List<CustomerMarker>> streamMarkers(String custId) {
-    var ref = _db.collection('customers').document(custId).collection('locations');
-    return ref.snapshots().map((list) =>
-      list.documents.map((doc) => CustomerMarker.fromFirestore(doc)).toList());
+  /// Locations subcollection
+  Stream<CustomerLocation> streamlocation(String cid, String lid) {
+    return _db
+      .collection('customers')
+      .document(cid).collection('locations').document(lid)
+      .snapshots()
+      .map((snapshot) => CustomerLocation.fromFirestore(snapshot));
   }
 
   /// Jobs collection

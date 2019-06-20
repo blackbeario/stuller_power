@@ -6,7 +6,6 @@ import './db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 
-
 class Locations extends StatelessWidget {
   final db = DatabaseService();
 

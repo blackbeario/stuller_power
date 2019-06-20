@@ -1,4 +1,5 @@
-// import 'dart:async';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:provider/provider.dart';
@@ -9,10 +10,31 @@ import './locations_list.dart';
 import './customer_map.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-class CustomerList extends StatelessWidget {
+class Customers extends StatefulWidget {
+  const Customers({Key key}) : super(key: key);
+
+  @override
+  _CustomersState createState() => _CustomersState();
+}
+
+class _CustomersState extends State<Customers> {
   final db = DatabaseService();
   final auth = FirebaseAuth.instance;
+  final Completer<GoogleMapController> _mapController = Completer();
+
+  @override
+  void initState() {
+    super.initState();
+    // _onListCreated(_mapController);
+  }
+
+  // void _onListCreated(GoogleMapController controller) {
+  //   setState(() {
+  //     _mapController = controller;
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -25,11 +47,17 @@ class CustomerList extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          CustomerMap(),
-          StreamProvider<List<Customer>>.value(
-            stream: db.streamCustomers(),
-            child: Customers(),
-          )
+          Flexible(
+            child: CustomerMap(
+              initialPosition: const LatLng(35.31873, -82.46095),
+              mapController: _mapController
+            ),
+            flex: 2,
+          ),
+          Flexible(
+            flex: 3,
+            child: CustomerList(mapController: _mapController,),
+          ),
         ],
       ),
     );
@@ -37,9 +65,15 @@ class CustomerList extends StatelessWidget {
 }
 
 // Creates the Customer ListTiles, etc for the CustomerList
-class Customers extends StatelessWidget {
+class CustomerList extends StatelessWidget {
+  CustomerList({
+    Key key,
+    @required this.mapController,
+  }) : super(key: key);
+
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
+  final Completer<GoogleMapController> mapController;
 
   @override
   Widget build(BuildContext context) {
@@ -52,53 +86,120 @@ class Customers extends StatelessWidget {
         )
       );
     }
-    else return Expanded(
-      child: ListView(
-        padding: EdgeInsets.all(10),
-        shrinkWrap: true,
-        children: customers.map((customer) {
-          return Card(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+    return ListView(
+      shrinkWrap: true,
+      children: customers.map((customer) {
+        return StreamProvider<List<CustomerLocation>>.value(
+          stream: db.streamlocations(customer.id),
+          child: Card(
+          margin: EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.0),
+          child: Container(
+            color: CupertinoColors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                CustomerLoc(customer: customer, mapController: mapController),
+              ],
             ),
-            margin: new EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.0),
-            child: Container(
-              color: CupertinoColors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  InkWell(
-                    onTap: () {
-                      // TODO: show on map! :)
-                      // _requestPop(customer, context);
-                    },
-                    onDoubleTap: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(builder: (context) {
-                          return CustomerDetails(customer);
-                        }),
-                      );
-                    },
-                    onLongPress: () {_requestPop(customer, context);},
-                    child: ListTile(
-                      // TODO: Change leading to area icon/color.
-                      leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
-                      title: Text(customer.firstName + ' ' + customer.lastName),
-                      subtitle: Text(customer.email),
-                      trailing: Icon(Icons.phone, color: Colors.green),
-                    ),
-                  ),
-                  Divider()
-                ],
+          )
+        )
+        );
+      }).toList(),
+    );
+  }
+}
+
+class CustomerLoc extends StatelessWidget {
+  const CustomerLoc({
+    Key key,
+    @required this.customer,
+    @required this.mapController,
+  }) : super(key: key);
+
+  final Customer customer;
+  final Completer<GoogleMapController> mapController;
+
+  // @override
+  // void dispose() {
+  //   // _disposed = true;
+  //   super.dispose();
+  // }
+
+  @override
+  Widget build(BuildContext context) {
+    var locations = Provider.of<List<CustomerLocation>>(context);
+    if (locations == null) {
+      return Center(
+        child: Text('Loading...')
+      );
+    }
+    return ListView(
+      shrinkWrap: true,
+      children: locations.map((location) {
+        if(locations.length == 1) {
+          return InkWell(
+            onTap: () {
+              _goToLocation(mapController, location);
+            },
+            onDoubleTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) {
+                  return CustomerDetails(customer);
+                }),
+              );
+            },
+            onLongPress: () {_requestPop(customer, context);},
+            child: ListTile(
+              dense: true,
+              // TODO: Change leading to area icon/color.
+              contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 0),
+              leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
+              title: Text(customer.firstName + ' ' + customer.lastName),
+              subtitle: Text(customer.email),
+              trailing: Icon(Icons.phone, color: Colors.green),
+            ),
+          );
+        }
+        return ExpansionTile(
+          initiallyExpanded: false,
+          key: PageStorageKey<CustomerLocation>(location),
+          title: Text(location.name),
+          children: <Widget>[
+            InkWell(
+              onTap: () {
+                _goToLocation(mapController, location);
+              },
+              onDoubleTap: () {
+                Navigator.of(context).push(
+                  CupertinoPageRoute(builder: (context) {
+                    return CustomerDetails(customer);
+                  }),
+                );
+              },
+              onLongPress: () {_requestPop(customer, context);},
+              child: ListTile(
+                dense: true,
+                // TODO: Change leading to area icon/color.
+                contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 0),
+                leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 42),
+                title: Text(customer.firstName + ' ' + customer.lastName),
+                subtitle: Text(customer.email),
+                trailing: Icon(Icons.phone, color: Colors.green),
               ),
             )
-          );
-        }).toList(),
-      ),
-    ); 
+          ]
+        );
+      }).toList(),
+    );
   }
 
-  // Actions for Customer items
+  void _goToLocation(mapController, location) async {
+    double lat = location.position['geopoint'].latitude;
+    double long = location.position['geopoint'].longitude;
+    final controller = await mapController.future;
+    await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 16));
+  }
+
   Future<bool> _requestPop(customer, BuildContext context) {
     showCupertinoDialog(context: context, builder: (BuildContext context) {
       return CupertinoAlertDialog(
@@ -122,12 +223,12 @@ class Customers extends StatelessWidget {
         ],
       );
     });
-    return new Future.value(false);
+    return Future.value(false);
   }
 }
 
 
-// Obviously, the Customer Details screen
+// Customer Details screen
 class CustomerDetails extends StatefulWidget {
   final Customer customer;
   const CustomerDetails(this.customer);
@@ -203,4 +304,3 @@ class _CustomerDetailsState extends State<CustomerDetails> {
     return Future.value(false);
   }
 }
-

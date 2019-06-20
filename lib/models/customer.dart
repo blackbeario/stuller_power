@@ -34,9 +34,9 @@ class CustomerLocation {
   final String city;
   final String state;
   final String zipcode;
-  // final List position;
+  final Map position;
 
-  CustomerLocation({ this.id, this.billing, this.area, this.name, this.address, this.city, this.state, this.zipcode });
+  CustomerLocation({ this.id, this.billing, this.area, this.name, this.address, this.city, this.state, this.zipcode, this.position });
 
   factory CustomerLocation.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -50,24 +50,24 @@ class CustomerLocation {
       city: data['city'] ?? '',
       state: data['state'] ?? '',
       zipcode: data['zipcode'] ?? '',
-      // position: data['position'] ?? ''
+      position: data['position'] ?? ''
     );
   }
 }
 
 
-class CustomerMarker {
-  final String id;
-  final List position;
+class Position {
+  final String geohash;
+  final GeoPoint geopoint;
 
-  CustomerMarker({ this.id, this.position });
+  Position({ this.geohash, this.geopoint });
 
-  factory CustomerMarker.fromFirestore(DocumentSnapshot doc) {
+  factory Position.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
-
-    return CustomerMarker(
-      id: doc.documentID,
-      position: data['position'] ?? '',
+    
+    return Position(
+      geohash: data['geohash'] ?? '',
+      geopoint: data['geopoint'] ?? ''
     );
   }
 }

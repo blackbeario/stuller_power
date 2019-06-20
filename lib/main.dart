@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         StreamProvider<FirebaseUser>.value(stream: AuthService().user),
-        StreamProvider<List<Customer>>.value(stream: db.streamCustomers()),
+        StreamProvider<List<Customer>>.value(stream: db.streamCustomers())
       ],
       child: CupertinoApp(
         debugShowCheckedModeBanner: false,
@@ -67,7 +67,7 @@ class UserInfoPage extends StatelessWidget {
           switch (index) {
             case 0: 
               return CupertinoTabView(
-                builder: (BuildContext context) => CustomerList(),
+                builder: (BuildContext context) => Customers(),
               );
               break;
             case 1:
