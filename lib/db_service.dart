@@ -31,20 +31,25 @@ class DatabaseService {
       list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
 
-  /// Locations subcollection
+  /// Single customer location for map list screen
+  Stream<List<CustomerLocation>> primarylocation(String id) {
+    var ref = _db.collection('customers').document(id).collection('locations').limit(1);
+    return ref.snapshots().map((list) =>
+      list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
+  }
+
+  /// All customer locations, in case they have more than one
   Stream<List<CustomerLocation>> streamlocations(String id) {
     var ref = _db.collection('customers').document(id).collection('locations');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
   }
 
-  /// Locations subcollection
-  Stream<CustomerLocation> streamlocation(String cid, String lid) {
-    return _db
-      .collection('customers')
-      .document(cid).collection('locations').document(lid)
-      .snapshots()
-      .map((snapshot) => CustomerLocation.fromFirestore(snapshot));
+  /// Generator data per location
+  Future<Generator> getGenerator(String cid, String lid) async {
+    var snap = await _db.collection('customers').document(cid)
+        .collection('locations').document(lid).collection('generators').document('gen').get();
+    return Generator.fromFirestore(snap);
   }
 
   /// Jobs collection

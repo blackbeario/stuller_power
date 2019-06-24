@@ -28,22 +28,20 @@ class CustomerMap extends StatefulWidget {
 }
 
 class _CustomerMapState extends State<CustomerMap> {
-
-  // final LatLng initialPosition;
-  // final Completer<GoogleMapController> mapController;
   MapType _currentMapType = MapType.normal;
   final Set<Marker> _markers = {};
   Location location = new Location();
   Firestore firestore = Firestore.instance;
   Geoflutterfire geo = Geoflutterfire();
-
   final db = DatabaseService();
+  bool pressAttention = false;
 
   void _onMapTypeButtonPressed() {
     setState(() {
       _currentMapType = _currentMapType == MapType.normal
           ? MapType.satellite
           : MapType.normal;
+      pressAttention = !pressAttention;
     });
   }
 
@@ -69,30 +67,29 @@ class _CustomerMapState extends State<CustomerMap> {
           compassEnabled: true,
           onMapCreated: _onMapCreated,
           markers: Set.from(_markers),
-          // onCameraMove: _onCameraMove,
         ),
         Padding(
-              padding: const EdgeInsets.all(0),
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: Column(
-                  children: <Widget> [
-                    FlatButton(
-                      onPressed: _animateToUser,
-                      child: Icon(Icons.center_focus_strong, color: Colors.black),
-                    ),
-                    FlatButton(
-                      child: Icon(Icons.pin_drop, color: Colors.black),
-                      onPressed: _addGeoPoint
-                    ),
-                    FlatButton(
-                      onPressed: _onMapTypeButtonPressed,
-                      child: const Icon(Icons.map, size: 20.0, color: Colors.black),
-                    ),
-                  ],
+          padding: const EdgeInsets.all(0),
+          child: Align(
+            alignment: Alignment(1, 0),
+            child: Column(
+              children: <Widget> [
+                FlatButton(
+                  onPressed: _animateToUser,
+                  child: Icon(Icons.center_focus_strong, color: pressAttention ? Colors.white : Colors.black),
                 ),
-              ),
+                // FlatButton(
+                //   child: Icon(Icons.pin_drop, color: pressAttention ? Colors.white : Colors.black),
+                //   onPressed: _addGeoPoint
+                // ),
+                FlatButton(
+                  onPressed: _onMapTypeButtonPressed,
+                  child: Icon(Icons.map, size: 20.0, color: pressAttention ? Colors.white : Colors.black),
+                ),
+              ],
             ),
+          ),
+        ),
       ],
     );
   }
@@ -149,21 +146,20 @@ class _CustomerMapState extends State<CustomerMap> {
     });
   }
 
-
   // Adds a new location for the current user.
-  Future<DocumentReference> _addGeoPoint() async {
-    var user = Provider.of<FirebaseUser>(context);
-    Location location = new Location();
-    Geoflutterfire geo = Geoflutterfire();
-    var pos = await location.getLocation();
-    GeoFirePoint point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
-    return firestore.collection('users').document(user.uid).collection('locations').add({
-      'position': point.data,
-    });
-  }
+  // Not needed now, but could be used for tracking techs later.
+  // Future<DocumentReference> _addGeoPoint() async {
+  //   var user = Provider.of<FirebaseUser>(context);
+  //   Location location = new Location();
+  //   Geoflutterfire geo = Geoflutterfire();
+  //   var pos = await location.getLocation();
+  //   GeoFirePoint point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
+  //   return firestore.collection('users').document(user.uid).collection('locations').add({
+  //     'position': point.data,
+  //   });
+  // }
 
   // Gets the location of the current user.
-  // We'll need this for the technicians later.
   void _animateToUser() async {
     var pos = await location.getLocation();
     final controller = await widget.mapController.future;
