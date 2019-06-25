@@ -33,7 +33,7 @@ class LoginPageState extends State<LoginPage> {
     auth.getUser.then(
       (user) {
         if (user != null) {
-          return UserInfoPage();
+          return AppHomePage();
         }
       },
     );
@@ -98,7 +98,7 @@ class LoginPageState extends State<LoginPage> {
                                 var user = await auth.signIn(
                                   _email.text, _password.text);
                                 if (user != null) {
-                                  return UserInfoPage();
+                                  return AppHomePage();
                                 }
                               }
                             },

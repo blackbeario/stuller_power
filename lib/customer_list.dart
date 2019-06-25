@@ -24,39 +24,131 @@ class _CustomersState extends State<Customers> {
   final db = DatabaseService();
   final auth = FirebaseAuth.instance;
   final Completer<GoogleMapController> _mapController = Completer();
+  bool _searchVisible = false;
 
   @override
   void initState() {
     super.initState();
   }
 
+  void _changed(bool visibility, String field) {
+    setState(() {
+      if (field == "search"){
+        _searchVisible = visibility;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    // var customers = Provider.of<List<Customer>>(context);
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
+        padding: EdgeInsetsDirectional.fromSTEB(40, 0, 40, 0),
+        leading: Column(
+          children: <Widget>[
+            _searchVisible ? new Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                Expanded(
+                  flex: 11,
+                  child: SearchBar()
+                ),
+                Expanded(
+                  flex: 1,
+                  child: new CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    child: Icon(CupertinoIcons.clear, size: 44,),
+                    onPressed: () {
+                      _changed(false, "search");
+                    },
+                  ),
+                )
+              ]
+            ) : GestureDetector(
+              child: Icon(Icons.search),
+              onTap: () {
+                _changed(true, "search");
+              },
+            )
+          ],
+        ),
         middle: Text('Customers'),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
+          // TODO: Add Customer search widget
           Flexible(
             child: CustomerMap(
               initialPosition: const LatLng(35.31873, -82.46095),
               mapController: _mapController
             ),
-            flex: 2,
+            flex: 3,
           ),
           Flexible(
             flex: 3,
-            child: CustomerList(mapController: _mapController,),
-          ),
-        ],
+            child: CustomerList(mapController: _mapController)
+          )
+        ]
       ),
     );
   }
 }
+
+/// Test search bar
+class SearchBar extends StatefulWidget {
+  const SearchBar({Key key}) : super(key: key);
+
+  _SearchBarState createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<SearchBar> {
+  bool _searchVisible = false;
+  // var customers = Provider.of<List<Customer>>(context);
+  
+  @override
+  void initState() {
+    setState(() {
+    });
+    super.initState();
+  }
+
+  void _changed(bool visibility, String field) {
+    setState(() {
+      if (field == "search"){
+        _searchVisible = visibility;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: CupertinoTextField(
+        autofocus: true,
+        maxLines: 1,
+        placeholder: "search",
+        onChanged: (text) {
+          text = text.toLowerCase();
+          setState(() {
+          //  _customerList = _customerList.where()
+          });
+        },
+        onSubmitted: (text) {
+          _changed(false, "search");
+        },
+        onEditingComplete: () {
+          _changed(false, "search");
+        }
+      ),
+    );
+  }
+}
+
+
 
 // Creates the Customer ListTiles, etc for the CustomerList
 class CustomerList extends StatelessWidget {
@@ -68,6 +160,7 @@ class CustomerList extends StatelessWidget {
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
   final Completer<GoogleMapController> mapController;
+  // final Completer<GoogleMapController> _mapController = Completer();
 
   @override
   Widget build(BuildContext context) {
@@ -87,18 +180,34 @@ class CustomerList extends StatelessWidget {
           // Only show the main location in this list.
           // Multiple locations will be shown on detail screen.
           stream: db.primarylocation(customer.id),
-          child: Card(
-          margin: EdgeInsets.symmetric(horizontal: 6.0, vertical: 1.0),
-          child: Container(
-            color: CupertinoColors.white,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                CustomerLoc(customer: customer, mapController: mapController),
-              ],
-            ),
+          child: Material(
+            // top: false,
+            child: Container(
+              color: CupertinoColors.white,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemBuilder: (context, index) {
+                  if (index < customers.length) {
+                    return CustomerLoc(
+                      db: db,
+                      index: index,
+                      lastItem: index == customers.length -1,
+                      customer: customers[index],
+                      mapController: mapController,
+                    );
+                  }
+                  return Text('wft');
+                }
+              ),
+              // child: Column(
+              //   crossAxisAlignment: CrossAxisAlignment.start,
+              //   children: <Widget>[
+              //     CustomerLoc(customer: customer, mapController: mapController),
+              //     Divider(height: 4),
+              //   ],
+              ),
+            
           )
-        )
         );
       }).toList(),
     );
@@ -108,48 +217,49 @@ class CustomerList extends StatelessWidget {
 class CustomerLoc extends StatelessWidget {
   const CustomerLoc({
     Key key,
+    this.db,
+    this.index,
+    this.lastItem,
     @required this.customer,
     @required this.mapController,
   }) : super(key: key);
 
+  final db;
+  final int index;
+  final bool lastItem;
   final Customer customer;
   final Completer<GoogleMapController> mapController;
 
   @override
   Widget build(BuildContext context) {
-    var locations = Provider.of<List<CustomerLocation>>(context);
-    if (locations == null) {
+    var location = Provider.of<List<CustomerLocation>>(context);
+    if (location == null) {
       return Center(
         child: Text('Loading...')
       );
     }
-    return ListView(
-      shrinkWrap: true,
-      children: locations.map((location) {
-        return InkWell(
-          onTap: () {
-            _goToLocation(mapController, location);
-          },
-          onDoubleTap: () {
-            Navigator.of(context).push(
-              CupertinoPageRoute(builder: (context) {
-                return CustomerDetails(customer);
-              }),
-            );
-          },
-          // Call the customer
-          onLongPress: () {_requestPop(customer, context);},
-          child: ListTile(
-            dense: true,
-            // TODO: Change leading to area icon/color
-            contentPadding: EdgeInsets.symmetric(horizontal: 10.0, vertical: 0),
-            leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
-            title: Text(customer.firstName + ' ' + customer.lastName),
-            subtitle: Text(customer.email),
-            trailing: Icon(Icons.phone, color: Colors.green),
-          ),
+    
+    return InkWell(
+      onTap: () {
+        _goToLocation(mapController, location);
+      },
+      onDoubleTap: () {
+        Navigator.of(context).push(
+          CupertinoPageRoute(builder: (context) {
+            return CustomerDetails(customer);
+          }),
         );
-      }).toList(),
+      },
+      // Call the customer
+      onLongPress: () {_requestPop(customer, context);},
+      child: ListTile(
+        // TODO: Change leading to area icon/color
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
+        leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
+        title: Text(customer.firstName + ' ' + customer.lastName),
+        subtitle: Text(customer.email),
+        trailing: Icon(Icons.phone, color: Colors.green),
+      ),
     );
   }
 

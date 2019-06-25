@@ -28,14 +28,14 @@ class MyApp extends StatelessWidget {
           primaryContrastingColor: Color(0xFF007AFF), // iOS 10's default blue 
           barBackgroundColor: Color(0xFFE5E5EA)
         ),
-        home: UserInfoPage(),
+        home: AppHomePage(),
       ),
     );
   }
 }
 
 
-class UserInfoPage extends StatelessWidget {
+class AppHomePage extends StatelessWidget {
   final AuthService auth = AuthService();
 
   @override

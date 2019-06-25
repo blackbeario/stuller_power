@@ -1,12 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import './models/customer.dart';
-// import './models/user.dart';
 import './db_service.dart';
-// import './locations_list.dart';
-// import 'package:rxdart/rxdart.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -78,10 +74,6 @@ class _CustomerMapState extends State<CustomerMap> {
                   onPressed: _animateToUser,
                   child: Icon(Icons.center_focus_strong, color: pressAttention ? Colors.white : Colors.black),
                 ),
-                // FlatButton(
-                //   child: Icon(Icons.pin_drop, color: pressAttention ? Colors.white : Colors.black),
-                //   onPressed: _addGeoPoint
-                // ),
                 FlatButton(
                   onPressed: _onMapTypeButtonPressed,
                   child: Icon(Icons.map, size: 20.0, color: pressAttention ? Colors.white : Colors.black),
@@ -161,12 +153,14 @@ class _CustomerMapState extends State<CustomerMap> {
 
   // Gets the location of the current user.
   void _animateToUser() async {
-    var pos = await location.getLocation();
+    double lat = 35.31873;
+    double lng = -82.46095;
+    // var pos = await location.getLocation();
     final controller = await widget.mapController.future;
     await controller.animateCamera(CameraUpdate.newCameraPosition(
       CameraPosition(
-        target: LatLng(pos.latitude,pos.longitude),
-        zoom: 17,
+        target: LatLng(lat,lng),
+        zoom: 10,
       )
     ));
   }

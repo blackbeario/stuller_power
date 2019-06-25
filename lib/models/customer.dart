@@ -73,7 +73,6 @@ class Position {
 }
 
 class Generator {
-  final String id;
   final String airFilter;
   final String battery;
   final String exerciseTime;
@@ -86,7 +85,7 @@ class Generator {
   final String warranty;
   final String wifi;
 
-  Generator({ this.id, this.airFilter, this.battery, this.exerciseTime, 
+  Generator({ this.airFilter, this.battery, this.exerciseTime, 
   this.model, this.oilFilter, this.serial, this.sparkPlugs, this.transferLocation,
   this.transferSerial, this.warranty, this.wifi
   });
@@ -96,7 +95,6 @@ class Generator {
 
     if (data != null) {
       return Generator(
-        id: doc.documentID,
         airFilter: data['airFilter'] ?? '',
         battery: data['battery'] ?? '',
         exerciseTime: data['exerciseTime'] ?? '',
@@ -111,7 +109,6 @@ class Generator {
       );
     }
     return Generator(
-      id: doc.documentID,
       airFilter: 'n/a',
       battery: 'n/a',
       exerciseTime: 'n/a',
