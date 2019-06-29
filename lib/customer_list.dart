@@ -46,16 +46,16 @@ class _CustomersState extends State<Customers> {
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
-        padding: EdgeInsetsDirectional.fromSTEB(40, 0, 40, 0),
+        // padding: EdgeInsetsDirectional.fromSTEB(40, 0, 40, 0),
         leading: Column(
           children: <Widget>[
             _searchVisible ? new Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: <Widget>[
-                Expanded(
-                  flex: 11,
-                  child: SearchBar()
-                ),
+                // Expanded(
+                //   flex: 11,
+                //   child: SearchBar()
+                // ),
                 Expanded(
                   flex: 1,
                   child: new CupertinoButton(
@@ -86,7 +86,7 @@ class _CustomersState extends State<Customers> {
               initialPosition: const LatLng(35.31873, -82.46095),
               mapController: _mapController
             ),
-            flex: 3,
+            flex: 2,
           ),
           Flexible(
             flex: 3,
@@ -99,22 +99,90 @@ class _CustomersState extends State<Customers> {
 }
 
 /// Test search bar
-class SearchBar extends StatefulWidget {
-  const SearchBar({Key key}) : super(key: key);
+// class SearchBar extends StatefulWidget {
+//   const SearchBar({Key key}) : super(key: key);
+//   _SearchBarState createState() => _SearchBarState();
+// }
 
-  _SearchBarState createState() => _SearchBarState();
+// class _SearchBarState extends State<SearchBar> {
+//   bool _searchVisible = false;
+  
+//   @override
+//   void initState() {
+//     setState(() {
+//     });
+//     super.initState();
+//   }
+
+//   void _changed(bool visibility, String field) {
+//     setState(() {
+//       if (field == "search"){
+//         _searchVisible = visibility;
+//       }
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Container(
+//       child: CupertinoTextField(
+//         autofocus: true,
+//         maxLines: 1,
+//         placeholder: "search",
+//         onChanged: (string) {
+//           setState(() {
+//             filteredCustomers = customers
+//               .where((customer) => (customer.firstName.toLowerCase()
+//                 .contains(string.toLowerCase()) ||
+//                 customer.lastName.toLowerCase().contains(string.toLowerCase())
+//                 || customer.email.toLowerCase().contains(string.toLowerCase())))
+//               .toList();
+//           });
+//         },
+//         onSubmitted: (text) {
+//           _changed(false, "search");
+//         },
+//         onEditingComplete: () {
+//           _changed(false, "search");
+//         }
+//       ),
+//     );
+//   }
+// }
+
+
+// Creates the Customer ListTiles, etc for the CustomerList
+class CustomerList extends StatefulWidget {
+  CustomerList({
+    Key key,
+    @required this.mapController,
+  }) : super(key: key);
+
+  final Completer<GoogleMapController> mapController;
+  @override
+  _CustomerListState createState() => _CustomerListState();
 }
 
-class _SearchBarState extends State<SearchBar> {
-  bool _searchVisible = false;
-  // var customers = Provider.of<List<Customer>>(context);
-  
+class _CustomerListState extends State<CustomerList> {
+  final auth = FirebaseAuth.instance;
+  final db = DatabaseService();
+
+  List<Customer> _customers = List();
+  List<Customer> filteredCustomers = List();
+
   @override
   void initState() {
-    setState(() {
-    });
     super.initState();
+    Future.delayed(Duration.zero,() {
+      var customers = Provider.of<List<Customer>>(context);
+      setState(() {
+        _customers = customers;
+        filteredCustomers = _customers;
+      });
+    });
   }
+
+  bool _searchVisible = false;
 
   void _changed(bool visibility, String field) {
     setState(() {
@@ -126,90 +194,106 @@ class _SearchBarState extends State<SearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: CupertinoTextField(
-        autofocus: true,
-        maxLines: 1,
-        placeholder: "search",
-        onChanged: (text) {
-          text = text.toLowerCase();
-          setState(() {
-          //  _customerList = _customerList.where()
-          });
-        },
-        onSubmitted: (text) {
-          _changed(false, "search");
-        },
-        onEditingComplete: () {
-          _changed(false, "search");
-        }
-      ),
-    );
-  }
-}
-
-
-
-// Creates the Customer ListTiles, etc for the CustomerList
-class CustomerList extends StatelessWidget {
-  CustomerList({
-    Key key,
-    @required this.mapController,
-  }) : super(key: key);
-
-  final auth = FirebaseAuth.instance;
-  final db = DatabaseService();
-  final Completer<GoogleMapController> mapController;
-  // final Completer<GoogleMapController> _mapController = Completer();
-
-  @override
-  Widget build(BuildContext context) {
-    var customers = Provider.of<List<Customer>>(context);
-
-    if (customers == null) {
+    
+    if (filteredCustomers == null) {
       return Center(
         child: CupertinoActivityIndicator(
           animating: true,
+          radius: 18.0,
         )
       );
     }
-    return ListView(
-      shrinkWrap: true,
-      children: customers.map((customer) {
-        return StreamProvider<List<CustomerLocation>>.value(
-          // Only show the main location in this list.
-          // Multiple locations will be shown on detail screen.
-          stream: db.primarylocation(customer.id),
-          child: Material(
-            // top: false,
-            child: Container(
-              color: CupertinoColors.white,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  if (index < customers.length) {
-                    return CustomerLoc(
-                      db: db,
-                      index: index,
-                      lastItem: index == customers.length -1,
-                      customer: customers[index],
-                      mapController: mapController,
-                    );
-                  }
-                  return Text('wft');
-                }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        _searchVisible ? new Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
+            Expanded(
+              flex: 11,
+              child: CupertinoTextField(
+                padding: EdgeInsets.all(10.0),
+                expands: true,
+                autofocus: true,
+                minLines: null,
+                maxLines: null,
+                placeholder: " search",
+                onChanged: (string) {
+                  setState(() {
+                    filteredCustomers = _customers
+                      .where((customer) => (customer.firstName.toLowerCase()
+                        .contains(string.toLowerCase()) ||
+                        customer.lastName.toLowerCase().contains(string.toLowerCase())
+                        || customer.email.toLowerCase().contains(string.toLowerCase())))
+                      .toList();
+                  });
+                },
               ),
-              // child: Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: <Widget>[
-              //     CustomerLoc(customer: customer, mapController: mapController),
-              //     Divider(height: 4),
-              //   ],
+            ),
+            Expanded(
+              flex: 1,
+              child: new CupertinoButton(
+                padding: EdgeInsets.only(right: 10.0),
+                child: Icon(CupertinoIcons.clear, size: 44,),
+                onPressed: () {
+                  _changed(false, "search");
+                  filteredCustomers = _customers;
+                },
               ),
-            
-          )
-        );
-      }).toList(),
+            )
+          ]
+        ) : Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            GestureDetector(
+              child: Icon(Icons.search),
+              onTap: () {
+                _changed(true, "search");
+              },
+            ),
+          ],
+        ),
+        Expanded(
+          child: ListView.separated(
+            itemCount: filteredCustomers.length,
+            shrinkWrap: true,
+            separatorBuilder: (context, index) {
+              return Divider(height: 0);
+            },
+            itemBuilder: (context, index) {
+              if (index < filteredCustomers.length) {
+              //  final customer = customers.map((customer) {
+              //     return StreamProvider<List<CustomerLocation>>.value(
+              //       stream: db.primarylocation(customer.id),
+              
+                return CustomerLoc(
+                  db: db,
+                  index: index,
+                  lastItem: index == filteredCustomers.length -1,
+                  customer: filteredCustomers[index],
+                  mapController: widget.mapController,
+                );
+                //   );
+                // });
+              }
+              return Text('loading...');
+            }
+          ),
+        ),
+      ],
+    
+    // child: Column(
+    //   crossAxisAlignment: CrossAxisAlignment.start,
+    //   children: <Widget>[
+    //     CustomerLoc(customer: customer, mapController: mapController),
+    //     Divider(height: 4),
+    //   ],
+    // ),
+    // )
+  //     );
+  //   }).toList(),
+      
     );
   }
 }
@@ -232,40 +316,43 @@ class CustomerLoc extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var location = Provider.of<List<CustomerLocation>>(context);
-    if (location == null) {
-      return Center(
-        child: Text('Loading...')
-      );
-    }
+    // var location = Provider.of<List<CustomerLocation>>(context);
+    // if (location == null) {
+    //   return Center(
+    //     child: Text('Loading...')
+    //   );
+    // }
     
-    return InkWell(
-      onTap: () {
-        _goToLocation(mapController, location);
-      },
-      onDoubleTap: () {
-        Navigator.of(context).push(
-          CupertinoPageRoute(builder: (context) {
-            return CustomerDetails(customer);
-          }),
-        );
-      },
-      // Call the customer
-      onLongPress: () {_requestPop(customer, context);},
-      child: ListTile(
-        // TODO: Change leading to area icon/color
-        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
-        leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
-        title: Text(customer.firstName + ' ' + customer.lastName),
-        subtitle: Text(customer.email),
-        trailing: Icon(Icons.phone, color: Colors.green),
+    return Material(
+      child: InkWell(
+      // onTap: () {
+      //   _goToLocation(mapController, location);
+      // },
+        onDoubleTap: () {
+          Navigator.of(context).push(
+            CupertinoPageRoute(builder: (context) {
+              return CustomerDetails(customer);
+            }),
+          );
+        },
+        // Call the customer
+        onLongPress: () {_requestPop(customer, context);},
+        child: ListTile(
+          dense: true,
+          // TODO: Change leading to area icon/color
+          contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
+          leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
+          title: Text(customer.firstName + ' ' + customer.lastName),
+          subtitle: Text(customer.email),
+          trailing: Icon(Icons.phone, color: Colors.green),
+        ),
       ),
     );
   }
 
   void _goToLocation(mapController, location) async {
-    double lat = location.position['geopoint'].latitude;
-    double long = location.position['geopoint'].longitude;
+    double lat = location[0].position['geopoint'].latitude;
+    double long = location[0].position['geopoint'].longitude;
     final controller = await mapController.future;
     await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 16));
   }

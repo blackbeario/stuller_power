@@ -72,6 +72,7 @@ class Position {
   }
 }
 
+
 class Generator {
   final String airFilter;
   final String battery;
