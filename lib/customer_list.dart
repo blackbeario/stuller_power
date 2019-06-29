@@ -67,6 +67,8 @@ class _CustomersState extends State<Customers> {
     );
   }
 }
+
+
 // Creates the Customer ListTiles, etc for the CustomerList
 class CustomerList extends StatefulWidget {
   CustomerList({
@@ -85,6 +87,7 @@ class _CustomerListState extends State<CustomerList> {
 
   List<Customer> _customers = List();
   List<Customer> filteredCustomers = List();
+  // String abc = "bb";
 
   @override
   void initState() {
@@ -95,6 +98,13 @@ class _CustomerListState extends State<CustomerList> {
         _customers = customers;
         filteredCustomers = _customers;
       });
+    });
+  }
+
+  void callback(resetCustomers) {
+    setState(() {
+      _changed(false, "search");
+      filteredCustomers = resetCustomers;
     });
   }
 
@@ -122,7 +132,7 @@ class _CustomerListState extends State<CustomerList> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
+      children: <Widget>[        
         _searchVisible ? new Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
@@ -162,11 +172,14 @@ class _CustomerListState extends State<CustomerList> {
         ) : Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            GestureDetector(
-              child: Icon(Icons.search),
-              onTap: () {
-                _changed(true, "search");
-              },
+            Expanded(
+              // flex: 11,
+              child: GestureDetector(
+                child: Icon(Icons.search),
+                onTap: () {
+                  _changed(true, "search");
+                },
+              ),
             ),
           ],
         ),
@@ -184,7 +197,11 @@ class _CustomerListState extends State<CustomerList> {
               //       stream: db.primarylocation(customer.id),
               
                 return CustomerLoc(
+                  callback: callback,
+                  changed: _changed,
+                  customers: _customers,
                   db: db,
+                  filtered: filteredCustomers,
                   index: index,
                   lastItem: index == filteredCustomers.length -1,
                   customer: filteredCustomers[index],
@@ -198,38 +215,39 @@ class _CustomerListState extends State<CustomerList> {
           ),
         ),
       ],
-    
-    // child: Column(
-    //   crossAxisAlignment: CrossAxisAlignment.start,
-    //   children: <Widget>[
-    //     CustomerLoc(customer: customer, mapController: mapController),
-    //     Divider(height: 4),
-    //   ],
-    // ),
-    // )
-  //     );
-  //   }).toList(),
-      
     );
   }
 }
 
-class CustomerLoc extends StatelessWidget {
-  const CustomerLoc({
+class CustomerLoc extends StatefulWidget {
+  CustomerLoc({
     Key key,
+    this.callback,
+    this.changed,
+    this.customers,
     this.db,
+    this.filtered,
     this.index,
     this.lastItem,
     @required this.customer,
     @required this.mapController,
   }) : super(key: key);
 
+  Function callback;
+  final changed;
+  List<Customer> customers;
   final db;
+  List<Customer> filtered;
   final int index;
   final bool lastItem;
   final Customer customer;
   final Completer<GoogleMapController> mapController;
 
+  @override
+  _CustomerLocState createState() => _CustomerLocState();
+}
+
+class _CustomerLocState extends State<CustomerLoc> {
   @override
   Widget build(BuildContext context) {
     // var location = Provider.of<List<CustomerLocation>>(context);
@@ -244,22 +262,25 @@ class CustomerLoc extends StatelessWidget {
       // onTap: () {
       //   _goToLocation(mapController, location);
       // },
-        onDoubleTap: () {
-          Navigator.of(context).push(
+        onDoubleTap: () async {
+          widget.callback(
+            widget.filtered = widget.customers
+          );
+          await Navigator.of(context).push(
             CupertinoPageRoute(builder: (context) {
-              return CustomerDetails(customer);
+              return CustomerDetails(widget.customer);
             }),
           );
         },
         // Call the customer
-        onLongPress: () {_requestPop(customer, context);},
+        onLongPress: () {_requestPop(widget.customer, context);},
         child: ListTile(
           dense: true,
           // TODO: Change leading to area icon/color
           contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
           leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
-          title: Text(customer.firstName + ' ' + customer.lastName),
-          subtitle: Text(customer.email),
+          title: Text(widget.customer.firstName + ' ' + widget.customer.lastName),
+          subtitle: Text(widget.customer.email),
           trailing: Icon(Icons.phone, color: Colors.green),
         ),
       ),
