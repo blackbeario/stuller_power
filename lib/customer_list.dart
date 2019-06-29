@@ -46,41 +46,11 @@ class _CustomersState extends State<Customers> {
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
-        // padding: EdgeInsetsDirectional.fromSTEB(40, 0, 40, 0),
-        leading: Column(
-          children: <Widget>[
-            _searchVisible ? new Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: <Widget>[
-                // Expanded(
-                //   flex: 11,
-                //   child: SearchBar()
-                // ),
-                Expanded(
-                  flex: 1,
-                  child: new CupertinoButton(
-                    padding: EdgeInsets.zero,
-                    child: Icon(CupertinoIcons.clear, size: 44,),
-                    onPressed: () {
-                      _changed(false, "search");
-                    },
-                  ),
-                )
-              ]
-            ) : GestureDetector(
-              child: Icon(Icons.search),
-              onTap: () {
-                _changed(true, "search");
-              },
-            )
-          ],
-        ),
         middle: Text('Customers'),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: <Widget>[
-          // TODO: Add Customer search widget
           Flexible(
             child: CustomerMap(
               initialPosition: const LatLng(35.31873, -82.46095),
@@ -97,60 +67,6 @@ class _CustomersState extends State<Customers> {
     );
   }
 }
-
-/// Test search bar
-// class SearchBar extends StatefulWidget {
-//   const SearchBar({Key key}) : super(key: key);
-//   _SearchBarState createState() => _SearchBarState();
-// }
-
-// class _SearchBarState extends State<SearchBar> {
-//   bool _searchVisible = false;
-  
-//   @override
-//   void initState() {
-//     setState(() {
-//     });
-//     super.initState();
-//   }
-
-//   void _changed(bool visibility, String field) {
-//     setState(() {
-//       if (field == "search"){
-//         _searchVisible = visibility;
-//       }
-//     });
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       child: CupertinoTextField(
-//         autofocus: true,
-//         maxLines: 1,
-//         placeholder: "search",
-//         onChanged: (string) {
-//           setState(() {
-//             filteredCustomers = customers
-//               .where((customer) => (customer.firstName.toLowerCase()
-//                 .contains(string.toLowerCase()) ||
-//                 customer.lastName.toLowerCase().contains(string.toLowerCase())
-//                 || customer.email.toLowerCase().contains(string.toLowerCase())))
-//               .toList();
-//           });
-//         },
-//         onSubmitted: (text) {
-//           _changed(false, "search");
-//         },
-//         onEditingComplete: () {
-//           _changed(false, "search");
-//         }
-//       ),
-//     );
-//   }
-// }
-
-
 // Creates the Customer ListTiles, etc for the CustomerList
 class CustomerList extends StatefulWidget {
   CustomerList({
