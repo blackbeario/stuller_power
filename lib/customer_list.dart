@@ -87,7 +87,6 @@ class _CustomerListState extends State<CustomerList> {
 
   List<Customer> _customers = List();
   List<Customer> filteredCustomers = List();
-  // String abc = "bb";
 
   @override
   void initState() {
@@ -101,6 +100,7 @@ class _CustomerListState extends State<CustomerList> {
     });
   }
 
+  // Resets customer list from child widget action.
   void callback(resetCustomers) {
     setState(() {
       _changed(false, "search");
@@ -129,10 +129,12 @@ class _CustomerListState extends State<CustomerList> {
         )
       );
     }
-    return Column(
+    return Container(
+      decoration: new BoxDecoration(color: Colors.white),
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[        
+      children: <Widget>[
         _searchVisible ? new Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
@@ -170,10 +172,10 @@ class _CustomerListState extends State<CustomerList> {
             )
           ]
         ) : Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
-            Expanded(
-              // flex: 11,
+            Container(
+              padding: EdgeInsets.fromLTRB(0, 6.0, 10.0, 6.0),
               child: GestureDetector(
                 child: Icon(Icons.search),
                 onTap: () {
@@ -192,11 +194,7 @@ class _CustomerListState extends State<CustomerList> {
             },
             itemBuilder: (context, index) {
               if (index < filteredCustomers.length) {
-              //  final customer = customers.map((customer) {
-              //     return StreamProvider<List<CustomerLocation>>.value(
-              //       stream: db.primarylocation(customer.id),
-              
-                return CustomerLoc(
+                return CustomerTile(
                   callback: callback,
                   changed: _changed,
                   customers: _customers,
@@ -207,20 +205,19 @@ class _CustomerListState extends State<CustomerList> {
                   customer: filteredCustomers[index],
                   mapController: widget.mapController,
                 );
-                //   );
-                // });
               }
               return Text('loading...');
             }
           ),
         ),
       ],
+      ),
     );
   }
 }
 
-class CustomerLoc extends StatefulWidget {
-  CustomerLoc({
+class CustomerTile extends StatefulWidget {
+  CustomerTile({
     Key key,
     this.callback,
     this.changed,
@@ -233,9 +230,9 @@ class CustomerLoc extends StatefulWidget {
     @required this.mapController,
   }) : super(key: key);
 
-  Function callback;
+  final Function callback;
   final changed;
-  List<Customer> customers;
+  final List<Customer> customers;
   final db;
   List<Customer> filtered;
   final int index;
@@ -244,52 +241,64 @@ class CustomerLoc extends StatefulWidget {
   final Completer<GoogleMapController> mapController;
 
   @override
-  _CustomerLocState createState() => _CustomerLocState();
+  _CustomerTileState createState() => _CustomerTileState();
 }
 
-class _CustomerLocState extends State<CustomerLoc> {
+class _CustomerTileState extends State<CustomerTile> {
   @override
   Widget build(BuildContext context) {
-    // var location = Provider.of<List<CustomerLocation>>(context);
-    // if (location == null) {
-    //   return Center(
-    //     child: Text('Loading...')
-    //   );
-    // }
-    
-    return Material(
-      child: InkWell(
-      // onTap: () {
-      //   _goToLocation(mapController, location);
-      // },
-        onDoubleTap: () async {
-          widget.callback(
-            widget.filtered = widget.customers
+    return FutureBuilder<CustomerLocation>(
+      future: widget.db.getLocation(widget.customer.id),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Material(
+            child: ListTile(
+              leading: Icon(Icons.error_outline, color: Colors.red),
+              title: Text('Cannot get customer location'),
+            ),
           );
-          await Navigator.of(context).push(
-            CupertinoPageRoute(builder: (context) {
-              return CustomerDetails(widget.customer);
-            }),
+        }
+        else if (snapshot.hasData) {
+          return Material(
+            child: InkWell(
+            onTap: () {
+              _goToLocation(widget.mapController, snapshot.data.position);
+            },
+              onDoubleTap: () async {
+                // Resets the customer list
+                widget.callback(
+                  widget.filtered = widget.customers
+                );
+                await Navigator.of(context).push(
+                  CupertinoPageRoute(builder: (context) {
+                    return CustomerDetails(widget.customer);
+                  }),
+                );
+              },
+              // Call the customer
+              onLongPress: () {_requestPop(widget.customer, context);},
+              child: ListTile(
+                dense: true,
+                // TODO: Change leading to area icon/color
+                contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
+                leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
+                title: Text(widget.customer.firstName + ' ' + widget.customer.lastName),
+                subtitle: Text(widget.customer.email),
+                trailing: Icon(Icons.phone, color: Colors.green),
+              ),
+            ),
           );
-        },
-        // Call the customer
-        onLongPress: () {_requestPop(widget.customer, context);},
-        child: ListTile(
-          dense: true,
-          // TODO: Change leading to area icon/color
-          contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
-          leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
-          title: Text(widget.customer.firstName + ' ' + widget.customer.lastName),
-          subtitle: Text(widget.customer.email),
-          trailing: Icon(Icons.phone, color: Colors.green),
-        ),
-      ),
+        }
+        else {
+          return CupertinoActivityIndicator();
+        }
+      }
     );
   }
 
   void _goToLocation(mapController, location) async {
-    double lat = location[0].position['geopoint'].latitude;
-    double long = location[0].position['geopoint'].longitude;
+    double lat = location['geopoint'].latitude;
+    double long = location['geopoint'].longitude;
     final controller = await mapController.future;
     await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 16));
   }

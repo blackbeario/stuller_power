@@ -38,6 +38,11 @@ class DatabaseService {
       list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
   }
 
+  Future<CustomerLocation> getLocation(String id) async {
+    var snap = await _db.collection('customers').document(id).collection('locations').document('primary').get();
+    return CustomerLocation.fromFirestore(snap);
+  }
+
   /// All customer locations, in case they have more than one
   Stream<List<CustomerLocation>> streamlocations(String id) {
     var ref = _db.collection('customers').document(id).collection('locations');
