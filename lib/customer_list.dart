@@ -135,6 +135,32 @@ class _CustomerListState extends State<CustomerList> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
+        Expanded(
+          child: ListView.separated(
+            itemCount: filteredCustomers.length,
+            shrinkWrap: true,
+            separatorBuilder: (context, index) {
+              return Divider(height: 0);
+            },
+            itemBuilder: (context, index) {
+              if (index < filteredCustomers.length) {
+                return CustomerTile(
+                  callback: callback,
+                  changed: _changed,
+                  customers: _customers,
+                  db: db,
+                  filtered: filteredCustomers,
+                  index: index,
+                  lastItem: index == filteredCustomers.length -1,
+                  customer: filteredCustomers[index],
+                  mapController: widget.mapController,
+                );
+              }
+              return Text('loading...');
+            }
+          ),
+        ),
+
         _searchVisible ? new Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: <Widget>[
@@ -172,43 +198,23 @@ class _CustomerListState extends State<CustomerList> {
             )
           ]
         ) : Row(
-          mainAxisAlignment: MainAxisAlignment.end,
           children: <Widget>[
-            Container(
-              padding: EdgeInsets.fromLTRB(0, 6.0, 10.0, 6.0),
-              child: GestureDetector(
-                child: Icon(Icons.search),
-                onTap: () {
-                  _changed(true, "search");
-                },
+            Expanded(
+              child: Container(
+                alignment: Alignment.bottomRight,
+                // color: Colors.yellow,
+                child: CupertinoButton(
+                  borderRadius: BorderRadius.zero,
+                  padding: EdgeInsets.fromLTRB(340.0, 0, 20, 0),
+                  // color: Colors.grey,
+                  child: Icon(CupertinoIcons.search),
+                  onPressed: () {
+                    _changed(true, "search");
+                  },
+                ),
               ),
             ),
           ],
-        ),
-        Expanded(
-          child: ListView.separated(
-            itemCount: filteredCustomers.length,
-            shrinkWrap: true,
-            separatorBuilder: (context, index) {
-              return Divider(height: 0);
-            },
-            itemBuilder: (context, index) {
-              if (index < filteredCustomers.length) {
-                return CustomerTile(
-                  callback: callback,
-                  changed: _changed,
-                  customers: _customers,
-                  db: db,
-                  filtered: filteredCustomers,
-                  index: index,
-                  lastItem: index == filteredCustomers.length -1,
-                  customer: filteredCustomers[index],
-                  mapController: widget.mapController,
-                );
-              }
-              return Text('loading...');
-            }
-          ),
         ),
       ],
       ),
@@ -263,9 +269,11 @@ class _CustomerTileState extends State<CustomerTile> {
             child: InkWell(
             onTap: () {
               _goToLocation(widget.mapController, snapshot.data.position);
+              widget.callback(
+                widget.filtered = widget.customers
+              );
             },
               onDoubleTap: () async {
-                // Resets the customer list
                 widget.callback(
                   widget.filtered = widget.customers
                 );

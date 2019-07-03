@@ -8,7 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'dart:ui' as ui;
+import 'dart:typed_data';
 
 class CustomerMap extends StatefulWidget {
   const CustomerMap({
@@ -31,6 +32,16 @@ class _CustomerMapState extends State<CustomerMap> {
   Geoflutterfire geo = Geoflutterfire();
   final db = DatabaseService();
   bool pressAttention = false;
+
+  Future<Uint8List> getBytesFromCanvas(int width, int height, Color _color) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint _paint = Paint()..color = _color;
+    canvas.drawCircle(Offset(width/2, height/2), height/2, _paint);
+    final img = await pictureRecorder.endRecording().toImage(width, height);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return data.buffer.asUint8List();
+  }
 
   void _onMapTypeButtonPressed() {
     setState(() {
@@ -55,7 +66,7 @@ class _CustomerMapState extends State<CustomerMap> {
         GoogleMap(
           initialCameraPosition: CameraPosition(
             target: widget.initialPosition,
-            zoom: 10
+            zoom: 9
           ),
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
@@ -112,17 +123,38 @@ class _CustomerMapState extends State<CustomerMap> {
         _updateMarkers(documentList);
       });
     });
-  }
+  } 
 
   void _updateMarkers(List<DocumentSnapshot> documentList) {
     documentList.forEach((DocumentSnapshot document) {
       GeoPoint point = document.data['position']['geopoint'];
+      String area = document.data['area'];
       String address = document.data['address'];
-      _addMarker(point.latitude, point.longitude, address);
+      _addMarker(point.latitude, point.longitude, area, address);
     });
   }
 
-  void _addMarker(double lat, double lng, String address) {
+  _markerColor(String area) {
+    switch (area) {
+      case 'Cedar Mountain':
+        return Colors.pink[200];
+        break;
+      case 'Flat Rock':
+        return Colors.teal[300];
+        break;
+      case 'Crab Creek':
+        return Colors.blue[300];
+        break;
+      case 'Cummings Cove':
+        return Colors.red[300];
+        break;
+      default:
+    }
+  }
+
+  void _addMarker(double lat, double lng, String area, String address) async {
+    final Uint8List markerIcon = await getBytesFromCanvas(40, 40, _markerColor(area));
+
     setState(() {
       _markers.add(
         Marker (
@@ -130,9 +162,13 @@ class _CustomerMapState extends State<CustomerMap> {
           markerId: MarkerId (address),
           position: LatLng (lat, lng),
           infoWindow: InfoWindow(
-            title: address
+            title: address,
+            snippet: area,
+            onTap: () {
+              // TODO: get directions.
+            }
           ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+          icon: BitmapDescriptor.fromBytes(markerIcon),
         ),
       );
     });
@@ -160,7 +196,7 @@ class _CustomerMapState extends State<CustomerMap> {
     await controller.animateCamera(CameraUpdate.newCameraPosition(
       CameraPosition(
         target: LatLng(lat,lng),
-        zoom: 10,
+        zoom: 9,
       )
     ));
   }
