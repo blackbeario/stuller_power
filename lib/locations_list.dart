@@ -147,10 +147,10 @@ class GeneratorDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _batteryTime = formatDate(generator.battery, [M, ' ', d, ' ', yyyy]);
-    final _batteryAge = DateTime.now().difference(generator.battery).inDays;
-    // Bool is battery older than four years (1460 days)?
-    bool _oldBattery = _batteryAge >= 1460 ? true : false;
+      final _batteryTime = generator.battery != null ? formatDate(generator.battery, [M, ' ', d, ' ', yyyy]) : '';
+      final _batteryAge = generator.battery != null ? DateTime.now().difference(generator.battery).inDays : null;
+      // Bool is battery older than four years (1460 days)?
+      bool _oldBattery = _batteryAge != null ? _batteryAge >= 1460 ? true : false : false;
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
