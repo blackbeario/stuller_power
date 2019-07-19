@@ -11,6 +11,8 @@ import 'package:flutter/cupertino.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
 
+import 'customer_list.dart';
+
 class CustomerMap extends StatefulWidget {
   const CustomerMap({
     Key key,
@@ -32,16 +34,6 @@ class _CustomerMapState extends State<CustomerMap> {
   Geoflutterfire geo = Geoflutterfire();
   final db = DatabaseService();
   bool pressAttention = false;
-
-  Future<Uint8List> getBytesFromCanvas(int width, int height, Color _color) async {
-    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
-    final Canvas canvas = Canvas(pictureRecorder);
-    final Paint _paint = Paint()..color = _color;
-    canvas.drawCircle(Offset(width/2, height/2), height/2, _paint);
-    final img = await pictureRecorder.endRecording().toImage(width, height);
-    final data = await img.toByteData(format: ui.ImageByteFormat.png);
-    return data.buffer.asUint8List();
-  }
 
   void _onMapTypeButtonPressed() {
     setState(() {
@@ -82,10 +74,12 @@ class _CustomerMapState extends State<CustomerMap> {
             child: Column(
               children: <Widget> [
                 FlatButton(
+                  padding: EdgeInsets.fromLTRB(0, 40, 40, 20),
                   onPressed: _animateToUser,
-                  child: Icon(Icons.center_focus_strong, color: pressAttention ? Colors.white : Colors.black),
+                  child: Icon(Icons.zoom_out_map, color: pressAttention ? Colors.white : Colors.black),
                 ),
                 FlatButton(
+                  padding: EdgeInsets.fromLTRB(0, 40, 40, 0),
                   onPressed: _onMapTypeButtonPressed,
                   child: Icon(Icons.map, size: 20.0, color: pressAttention ? Colors.white : Colors.black),
                 ),
@@ -113,48 +107,41 @@ class _CustomerMapState extends State<CustomerMap> {
 
     customers.forEach((Customer customer) {
       var ref = firestore.collection('customers').document(customer.id).collection('locations');
-    
+      
       double radius = 50;
       String field = 'position';
 
       Stream<List<DocumentSnapshot>> stream = geo.collection(collectionRef: ref).within(center: center, radius: radius, field: field);
 
       stream.listen((List<DocumentSnapshot> documentList) {
-        _updateMarkers(documentList);
+        _updateMarkers(customer, documentList);
       });
     });
   } 
 
-  void _updateMarkers(List<DocumentSnapshot> documentList) {
+  void _updateMarkers(Customer customer, List<DocumentSnapshot> documentList) {
     documentList.forEach((DocumentSnapshot document) {
       GeoPoint point = document.data['position']['geopoint'];
       String area = document.data['area'];
       String address = document.data['address'];
-      _addMarker(point.latitude, point.longitude, area, address);
+      _addMarker(customer, point.latitude, point.longitude, area, address);
     });
   }
 
-  _markerColor(String area) {
-    switch (area) {
-      case 'Cedar Mountain':
-        return Colors.pink[200];
-        break;
-      case 'Flat Rock':
-        return Colors.teal[300];
-        break;
-      case 'Crab Creek':
-        return Colors.blue[300];
-        break;
-      case 'Cummings Cove':
-        return Colors.red[300];
-        break;
-      default:
-    }
+  // Draws a canvas circle map marker with color
+  Future<Uint8List> getBytesFromCanvas(int width, int height, Color _color) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint _paint = Paint()..color = _color;
+    canvas.drawCircle(Offset(width/2, height/2), height/2, _paint);
+    final img = await pictureRecorder.endRecording().toImage(width, height);
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+    return data.buffer.asUint8List();
   }
 
-  void _addMarker(double lat, double lng, String area, String address) async {
-    final Uint8List markerIcon = await getBytesFromCanvas(40, 40, _markerColor(area));
-
+  void _addMarker(Customer customer, double lat, double lng, String area, String address) async {
+    final Uint8List markerIcon = await getBytesFromCanvas(40, 40, db.markerColor(area));
+    final name = customer.firstName + ' ' + customer.lastName;
     setState(() {
       _markers.add(
         Marker (
@@ -162,11 +149,15 @@ class _CustomerMapState extends State<CustomerMap> {
           markerId: MarkerId (address),
           position: LatLng (lat, lng),
           infoWindow: InfoWindow(
-            title: address,
-            snippet: area,
-            onTap: () {
-              // TODO: get directions.
-            }
+            title: name,
+            snippet: address,
+            onTap: () async {
+                await Navigator.of(context).push(
+                  CupertinoPageRoute(builder: (context) {
+                    return CustomerDetails(customer);
+                  }),
+                );
+              },
           ),
           icon: BitmapDescriptor.fromBytes(markerIcon),
         ),

@@ -8,6 +8,7 @@ import './models/customer.dart';
 import './db_service.dart';
 import './locations_list.dart';
 import './customer_map.dart';
+import './customer_form.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -251,6 +252,7 @@ class CustomerTile extends StatefulWidget {
 }
 
 class _CustomerTileState extends State<CustomerTile> {
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<CustomerLocation>(
@@ -274,22 +276,21 @@ class _CustomerTileState extends State<CustomerTile> {
               );
             },
               onDoubleTap: () async {
-                widget.callback(
-                  widget.filtered = widget.customers
-                );
                 await Navigator.of(context).push(
                   CupertinoPageRoute(builder: (context) {
                     return CustomerDetails(widget.customer);
                   }),
                 );
+                 await widget.callback(
+                  widget.filtered = widget.customers
+                );
               },
               // Call the customer
-              onLongPress: () {_requestPop(widget.customer, context);},
+              onLongPress: () {_callCustomer(widget.customer, context);},
               child: ListTile(
                 dense: true,
-                // TODO: Change leading to area icon/color
                 contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
-                leading: Icon(Icons.person_pin_circle, color: Colors.red, size: 36),
+                leading: Icon(Icons.person_pin_circle, color: widget.db.markerColor(snapshot.data.area), size: 36),
                 title: Text(widget.customer.firstName + ' ' + widget.customer.lastName),
                 subtitle: Text(widget.customer.email),
                 trailing: Icon(Icons.phone, color: Colors.green),
@@ -311,7 +312,7 @@ class _CustomerTileState extends State<CustomerTile> {
     await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 16));
   }
 
-  Future<bool> _requestPop(customer, BuildContext context) {
+  Future<bool> _callCustomer(customer, BuildContext context) {
     showCupertinoDialog(context: context, builder: (BuildContext context) {
       return CupertinoAlertDialog(
         title: Text('Call ' + customer.firstName + ' ' + customer.lastName + '?'),
@@ -341,7 +342,7 @@ class _CustomerTileState extends State<CustomerTile> {
 }
 
 
-// Customer Details screen
+/// Customer Details screen
 class CustomerDetails extends StatefulWidget {
   final Customer customer;
   const CustomerDetails(this.customer);
@@ -400,7 +401,12 @@ class _CustomerDetailsState extends State<CustomerDetails> {
           CupertinoDialogAction(
             child: Text('Yes'),
             isDestructiveAction: true,
-            onPressed: () {
+            onPressed: () async {
+              await Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) {
+                  return CustomerAddEdit(widget.customer, );
+                }),
+              );
               Navigator.pop(context, 'Discard');
             }
           ),

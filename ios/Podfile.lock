@@ -179,19 +179,19 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   BoringSSL-GRPC: db8764df3204ccea016e1c8dd15d9a9ad63ff318
-  cloud_firestore: bc0d486b261b8e695474566f708a9e160baf8c2b
+  cloud_firestore: c6f34148c1dfbb57a6147f9bb49c1c9f5c27036e
   Firebase: 5965bac23e7fcb5fa6d926ed429c9ecef8a2014e
-  firebase_auth: b08c4f3eb6dcaa66d71882e8e17db5cc65f00080
-  firebase_core: c96aa8b2fcf7f5167d32f22034f502f9304952b8
+  firebase_auth: 3b8e685dbf2519d315265f3d2283da3fd0711ee3
+  firebase_core: 44f31f51532812598f0f9f4af0caa705b9edfc19
   FirebaseAnalytics: 629301c2b9925f3537d4093a17a72751ae5b7084
   FirebaseAuth: 80879f0e9f2c5f40686d5b42f6ccb3cd5dce78ea
   FirebaseAuthInterop: 0ffa57668be100582bb7643d4fcb7615496c41fc
   FirebaseCore: b0f0262acebfa540e5f97b3832dbb13186980822
   FirebaseFirestore: d9c55dfd0cd648f420cc8340c4940dc3eab2d860
   FirebaseInstanceID: cdb3827746d53ece7ae87a5c51c25c3055443366
-  Flutter: 9d0fac939486c9aba2809b7982dfdbb47a7b0296
-  geoflutterfire: 44694e56250c715a43f3fe75706538cc4fb105dc
-  google_maps_flutter: 6449d5918d3f1a69a37dc9c557bbad7bb9bcf0e9
+  Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
+  geoflutterfire: 2a6493e01fb6eef1a6c9046b1baf9a943d0c5ffe
+  google_maps_flutter: 78a52114c898b42ea647919679a4c58b70abe876
   GoogleAppMeasurement: 51d8d9ea48f0ca44484d29cfbdef976fbd4fc336
   GoogleMaps: f79af95cb24d869457b1f961c93d3ce8b2f3b848
   GoogleUtilities: 996e0db07153674fd1b54b220fda3a3dc3547cba
@@ -199,11 +199,11 @@ SPEC CHECKSUMS:
   gRPC-Core: c9aef9a261a1247e881b18059b84d597293c9947
   GTMSessionFetcher: 61bb0f61a4cb560030f1222021178008a5727a23
   leveldb-library: 08cba283675b7ed2d99629a4bc5fd052cd2bb6a5
-  location: 26c90953ad5916331d0d1d913898779910416487
+  location: 3a2eed4dd2fab25e7b7baf2a9efefe82b512d740
   nanopb: 2901f78ea1b7b4015c860c2fdd1ea2fee1a18d48
   Protobuf: 3f617b9a6e73605565086864c9bc26b2bf2dd5a3
-  url_launcher: 92b89c1029a0373879933c21642958c874539095
+  url_launcher: 0067ddb8f10d36786672aa0722a21717dba3a298
 
 PODFILE CHECKSUM: b1f5558e431d0b25d1f5e17a6969b538b978422d
 
-COCOAPODS: 1.5.3
+COCOAPODS: 1.7.4

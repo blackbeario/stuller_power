@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 // import 'package:geoflutterfire/geoflutterfire.dart';
 // import 'package:location/location.dart';
 import 'dart:async';
@@ -109,6 +110,11 @@ class DatabaseService {
       .delete();
   }
 
+  Future<void> startJob(String id) async {
+    var $now = DateTime.now().millisecondsSinceEpoch;
+    return await _db.collection('jobs').document(id).updateData({'started': $now});  
+  }
+
   Future<void> updateDone(String id, bool done) async {
     var $now = DateTime.now();
     var ended = done ? $now.millisecondsSinceEpoch : null;
@@ -124,4 +130,22 @@ class DatabaseService {
   //     'position': point.data,
   //   });
   // }
+
+  markerColor(String area) {
+    switch (area) {
+      case 'Cedar Mountain':
+        return Colors.pink[200];
+        break;
+      case 'Flat Rock':
+        return Colors.teal[300];
+        break;
+      case 'Crab Creek':
+        return Colors.blue[300];
+        break;
+      case 'Cummings Cove':
+        return Colors.red[300];
+        break;
+      default:
+    }
+  }
 }

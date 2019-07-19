@@ -75,7 +75,7 @@ class Position {
 
 class Generator {
   final String airFilter;
-  final String battery;
+  final DateTime battery;
   final String exerciseTime;
   final String model;
   final String oilFilter;
@@ -84,7 +84,7 @@ class Generator {
   final String transferLocation;
   final String transferSerial;
   final String warranty;
-  final String wifi;
+  final bool wifi;
 
   Generator({ this.airFilter, this.battery, this.exerciseTime, 
   this.model, this.oilFilter, this.serial, this.sparkPlugs, this.transferLocation,
@@ -94,33 +94,18 @@ class Generator {
   factory Generator.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
 
-    if (data != null) {
-      return Generator(
-        airFilter: data['airFilter'] ?? '',
-        battery: data['battery'] ?? '',
-        exerciseTime: data['exerciseTime'] ?? '',
-        model: data['model'] ?? '',
-        oilFilter: data['oilFilter'] ?? '',
-        serial: data['serial'] ?? '',
-        sparkPlugs: data['sparkPlugs'] ?? '',
-        transferLocation: data['transferLocation'] ?? '',
-        transferSerial: data['transferSerial'] ?? '',
-        warranty: data['warranty'] ?? '',
-        wifi: data['wifi'] ?? '',
-      );
-    }
     return Generator(
-      airFilter: 'n/a',
-      battery: 'n/a',
-      exerciseTime: 'n/a',
-      model: 'n/a',
-      oilFilter: 'n/a',
-      serial: 'n/a',
-      sparkPlugs: 'n/a',
-      transferLocation: 'n/a',
-      transferSerial: 'n/a',
-      warranty: 'n/a',
-      wifi: 'n/a',
+      airFilter: data['airFilter'] ?? '',
+      battery: data['battery'] != null ? DateTime.fromMillisecondsSinceEpoch(data['battery']) : null,
+      exerciseTime: data['exerciseTime'] ?? '',
+      model: data['model'] ?? '',
+      oilFilter: data['oilFilter'] ?? '',
+      serial: data['serial'] ?? '',
+      sparkPlugs: data['sparkPlugs'] ?? '',
+      transferLocation: data['transferLocation'] ?? '',
+      transferSerial: data['transferSerial'] ?? '',
+      warranty: data['warranty'] ?? '',
+      wifi: data['wifi'] ?? false,
     );
   }
 }

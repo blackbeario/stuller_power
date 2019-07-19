@@ -6,6 +6,7 @@ import './db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:url_launcher/url_launcher.dart' as UrlLauncher;
+import 'package:date_format/date_format.dart';
 
 class Locations extends StatelessWidget {
   Locations({
@@ -25,26 +26,26 @@ class Locations extends StatelessWidget {
         child: Text('No locations. Add one for this customer.')
       );
     }
-    else {
-      return ListView(
-        shrinkWrap: true,
-        children: locations.map((location) {
-          bool _billing = location.billing;
 
-          if(locations.length == 1) {
-            return LocationTile(billing: _billing, customer: customer, location: location);
-          }
-          return ExpansionTile(
-            // initiallyExpanded: true,
-            key: PageStorageKey<CustomerLocation>(location),
-            title: Text(location.name),
-            children: <Widget>[
-              LocationTile(billing: _billing, customer: customer, location: location)
-            ],
-          );
-        }).toList(),
-      );
-    }
+    return ListView(
+      shrinkWrap: true,
+      children: locations.map((location) {
+        bool _billing = location.billing;
+
+        if(locations.length == 1) {
+          return LocationTile(billing: _billing, customer: customer, location: location);
+        }
+        return ExpansionTile(
+          initiallyExpanded: true,
+          key: PageStorageKey<CustomerLocation>(location),
+          title: Text(location.name),
+          children: <Widget>[
+            LocationTile(billing: _billing, customer: customer, location: location)
+          ],
+        );
+      }).toList(),
+    );
+    
   }
 }
 
@@ -100,6 +101,7 @@ class GeneratorTile extends StatelessWidget {
       future: db.getGenerator(customer.id, location.id),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          print(snapshot.error);
           return ListTile(
             leading: Icon(Icons.gamepad, color: Colors.orange),
             title: Text('There was an error'),
@@ -136,13 +138,20 @@ class GeneratorTile extends StatelessWidget {
 class GeneratorDetail extends StatelessWidget {
   const GeneratorDetail({
     Key key,
-    @required this.generator
+    @required this.generator,
+    this.old
     }) : super(key: key);
 
     final Generator generator;
+    final bool old;
 
   @override
   Widget build(BuildContext context) {
+    final _batteryTime = formatDate(generator.battery, [M, ' ', d, ' ', yyyy]);
+    final _batteryAge = DateTime.now().difference(generator.battery).inDays;
+    // Bool is battery older than four years (1460 days)?
+    bool _oldBattery = _batteryAge >= 1460 ? true : false;
+
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
@@ -159,79 +168,79 @@ class GeneratorDetail extends StatelessWidget {
           children: <Widget>[
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,20,40,0),
-              leading: Icon(Icons.filter_drama, color: Colors.grey),
-              title: Text('Air Filter: '),
+              leading: Icon(Icons.filter_drama),
+              title: Text('Air Filter:'),
               trailing: Text(generator.airFilter),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.battery_charging_full, color: Colors.red),
-              title: Text('Battery: '),
-              trailing: Text(generator.battery),
+              leading: _oldBattery ? Icon(Icons.battery_alert, color: Colors.red,) : Icon(Icons.battery_charging_full),
+              title: Text('Battery Age:'),
+              trailing: _oldBattery ? Text(_batteryTime, style: TextStyle(color: Colors.red)) : Text(_batteryTime),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.directions_run, color: Colors.blue),
-              title: Text('Excercise Time: '),
+              leading: Icon(Icons.directions_run),
+              title: Text('Excercise Time:'),
               trailing: Text(generator.exerciseTime)
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.build, color: Colors.green),
-              title: Text('Model: '),
+              leading: Icon(Icons.build),
+              title: Text('Model:'),
               trailing: Text(generator.model),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.format_color_fill, color: Colors.black),
-              title: Text('Oil filter: '),
+              leading: Icon(Icons.format_color_fill),
+              title: Text('Oil filter:'),
               trailing: Text(generator.oilFilter)
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.gamepad, color: Colors.orange),
-              title: Text('Serial Number: '),
+              leading: Icon(Icons.gamepad),
+              title: Text('Serial Number:'),
               trailing: Text(generator.serial),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.flash_on, color: Colors.grey),
-              title: Text('Spark Plugs: '),
+              leading: Icon(Icons.flash_on),
+              title: Text('Spark Plugs:'),
               trailing: Text(generator.sparkPlugs),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.swap_vertical_circle, color: Colors.red),
-              title: Text('Xfer Location: '),
+              leading: Icon(Icons.swap_vertical_circle),
+              title: Text('Xfer Location:'),
               trailing: Text(generator.transferLocation),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.swap_vert, color: Colors.blue),
-              title: Text('Xfer Serial: '),
+              leading: Icon(Icons.swap_vert),
+              title: Text('Xfer Serial:'),
               trailing: Text(generator.transferSerial),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.lock_outline, color: Colors.green),
-              title: Text('Warranty: '),
+              leading: Icon(Icons.lock_outline),
+              title: Text('Warranty:'),
               trailing: Text(generator.warranty),
             ),
             Divider(),
             ListTile(
               contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.wifi, color: Colors.black),
-              title: Text('Wifi: '),
-              trailing: Text(generator.wifi),
+              leading: Icon(Icons.wifi),
+              title: Text('Wifi:'),
+              trailing: Text(generator.wifi.toString()),
             ),
           ],
         ),

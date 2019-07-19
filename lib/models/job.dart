@@ -34,13 +34,13 @@ class Job {
   Map<String, dynamic> toJson() =>
     {
       'done' : done,
-      'category' :category,
-      'customer' :customer,
+      'category' : category,
+      'customer' : customer,
       'created' : created?.millisecondsSinceEpoch,
       'started' : started?.millisecondsSinceEpoch,
       'ended' : ended?.millisecondsSinceEpoch,
-      'title' :title,
-      'description' :description,
-      'techID' :techID
+      'title' : title,
+      'description' : description,
+      'techID' : techID
     };
 }

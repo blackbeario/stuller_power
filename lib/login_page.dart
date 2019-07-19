@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
+import 'package:flare_flutter/flare_actor.dart';
 import 'package:stullerPower/models/auth_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stullerPower/main.dart';
@@ -11,6 +11,7 @@ class LoginPage extends StatefulWidget {
 class LoginPageState extends State<LoginPage> {
   AuthService auth = AuthService();
   bool _hidePassword = true;
+  String animationName = 'flash';
 
   // Toggles the password show status
   void _toggle() {
@@ -32,9 +33,10 @@ class LoginPageState extends State<LoginPage> {
     _password = TextEditingController(text: "");
     auth.getUser.then(
       (user) {
-        if (user != null) {
-          return AppHomePage();
+        if (user == null) {
+          return CupertinoActivityIndicator(animating: true);
         }
+        return AppHomePage();
       },
     );
   }
@@ -53,7 +55,14 @@ class LoginPageState extends State<LoginPage> {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         
           children: <Widget>[
-            FlutterLogo(size: 150),
+            Expanded(
+              child: FlareActor(
+                'assets/bolt2.flr',
+                alignment: Alignment.center,
+                fit: BoxFit.contain,
+                animation: animationName
+              ),
+            ),
             SafeArea(
               child: Form(
                 key: _formKey,
@@ -91,21 +100,22 @@ class LoginPageState extends State<LoginPage> {
                         child: Material(
                           elevation: 5.0,
                           borderRadius: BorderRadius.circular(10.0),
-                          color: Colors.green,
+                          color: Colors.orange[400],
                           child: CupertinoButton(
                             onPressed: () async {
                               if (_formKey.currentState.validate()) {
                                 var user = await auth.signIn(
                                   _email.text, _password.text);
-                                if (user != null) {
-                                  return AppHomePage();
+                                if (user == null) {
+                                  return CupertinoActivityIndicator(animating: true);
                                 }
                               }
+                              return AppHomePage();
                             },
                             child: Text(
                               "Sign In",
                               style: style.copyWith(
-                                color: Colors.white,
+                                color: Colors.black,
                                 fontWeight: FontWeight.bold),
                             ),
                           ),
