@@ -7,8 +7,9 @@ class Customer {
   final String email;
   final String main;
   final String mobile;
+  final String notes;
 
-  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile });
+  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes });
 
   factory Customer.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -20,6 +21,7 @@ class Customer {
       email: data['email'] ?? '',
       main: data['main'] ?? '',
       mobile: data['mobile'] ?? '',
+      notes: data['notes'] ?? ''
     );
   }
 }

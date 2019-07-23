@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import './models/customer.dart';
 import './db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
@@ -148,8 +149,10 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
               // Add some space between sections
               SizedBox(height: 40),
 
-              // Locations fields
-              LocationWidget(),
+              StreamProvider<List<CustomerLocation>>.value(
+                stream: db.streamlocations(widget.customer.id),
+                child: LocationWidget(customer: widget.customer),
+              ),
             ]
           )
         ),
@@ -159,116 +162,184 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
 }
 
 class LocationWidget extends StatefulWidget {
+  LocationWidget({
+    Key key,
+    @required this.customer,
+  }) : super(key: key);
+
+  final Customer customer;
+  final db = DatabaseService();
+
   @override
   State<StatefulWidget> createState() => _LocationWidgetState();
 }
 
 class _LocationWidgetState extends State<LocationWidget> {
-  
-  bool _billing = true;
+
+  @override
+  Widget build(BuildContext context) {
+    var locations = Provider.of<List<CustomerLocation>>(context);
+
+    if (locations == null) {
+      return Center(
+        child: Text('No locations. Add one for this customer.')
+      );
+    }
+
+    return ListView(
+      shrinkWrap: true,
+      children: locations.map((location) {
+        bool _billing = location.billing;
+        if(locations.length == 1) {
+          return LocationForm(location: location, billing: _billing);
+        }
+        return ExpansionTile(
+          initiallyExpanded: false,
+          title: Text(location.name.toUpperCase()),
+          children: <Widget>[
+            LocationForm(location: location, billing: _billing),
+          ],
+        );
+      }).toList(),
+    );
+  }
+}
+
+class LocationForm extends StatefulWidget {
+  LocationForm({
+    Key key,
+    @required this.location,
+    @required this.billing,
+  }) : super(key: key);
+
+  bool billing;
+  final CustomerLocation location;
+
+  @override
+  _LocationFormState createState() => _LocationFormState();
+}
+
+class _LocationFormState extends State<LocationForm> {
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _zipcodeController = TextEditingController();
-  final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _addressController.text = widget.location.address;
+    _cityController.text = widget.location.city;
+    _stateController.text = widget.location.state;
+    _zipcodeController.text = widget.location.zipcode;
+  }
 
   void _billingChanged(bool value) {
-    setState(() => _billing = value);
-  } 
+    setState(() => widget.billing = value);
+  }
+
+  @override
+  void dispose() {
+    _addressController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipcodeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return new Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
+    return Container(
+      child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            // Area filter
+            // DropdownButtonFormField(
+            //   items: areas.map((String area) {
+            //     return new DropdownMenuItem(
+            //       value: area,
+            //       child: new Text(area),
+            //     );
+            //   }).toList(),
+            //   // onChanged: (newValue) {
+            //   //   _customerAddEditBloc.areaSink.add(newValue);
+            //   //   setState(() => _area = newValue);
+            //   // },
+            //   // This needs work to get saved value from Firebase.
+            //   value: _area,
+            //   decoration: InputDecoration(
+            //     contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+            //     filled: true,
+            //     fillColor: Colors.grey[200],
+            //     hintText: 'Area', 
+            //     // errorText: errorSnapshot.data == 0 ? Localization.of(context).areaEmpty : null),
+            //   ),
+            // ),
 
-        // Area filter
-        // DropdownButtonFormField(
-        //   items: areas.map((String area) {
-        //     return new DropdownMenuItem(
-        //       value: area,
-        //       child: new Text(area),
-        //     );
-        //   }).toList(),
-        //   // onChanged: (newValue) {
-        //   //   _customerAddEditBloc.areaSink.add(newValue);
-        //   //   setState(() => _area = newValue);
-        //   // },
-        //   // This needs work to get saved value from Firebase.
-        //   value: _area,
-        //   decoration: InputDecoration(
-        //     contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-        //     filled: true,
-        //     fillColor: Colors.grey[200],
-        //     hintText: 'Area', 
-        //     // errorText: errorSnapshot.data == 0 ? Localization.of(context).areaEmpty : null),
-        //   ),
-        // ),
-
-        // Billing
-        CheckboxListTile(
-          value: _billing,
-          // onChanged: (bool) => _customerAddEditBloc.billingSink.add(bool),
-          onChanged: _billingChanged,
-          title: new Text('Billing Address?'),
-          controlAffinity: ListTileControlAffinity.leading,
-          secondary: new Icon(Icons.archive),
-          activeColor: CupertinoColors.activeBlue,
-        ),
-
-        // Address input
-        TextField(
-          style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-          // onChanged: (text) => _customerAddEditBloc.addressSink.add(text),
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-            labelText: 'Address',
-            hintText: 'Address', 
-            // errorText: errorSnapshot.data == 1 ? Localization.of(context).addressEmpty : null
-          ),
-          controller: _addressController,
-        ),
-
-        // City input
-        TextField(
-          style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-          // onChanged: (text) => _customerAddEditBloc.citySink.add(text),
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-            labelText: 'City',
-            hintText: "City", 
-            // errorText: errorSnapshot.data == 0 ? Localization.of(context).cityEmpty : null
-          ),
-          controller: _cityController,
-        ),
-
-        // State input
-        TextField(
-          style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-          // onChanged: (text) => _customerAddEditBloc.stateSink.add(text),
-          decoration: InputDecoration(
-            contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-            labelText: 'State',
-            hintText: "State", 
-            // errorText: errorSnapshot.data == 0 ? Localization.of(context).stateEmpty : null
+            // Billing
+            CheckboxListTile(
+              value: widget.billing,
+              // onChanged: (bool) => _customerAddEditBloc.billingSink.add(bool),
+              onChanged: _billingChanged,
+              title: new Text('Billing Address?'),
+              controlAffinity: ListTileControlAffinity.leading,
+              activeColor: CupertinoColors.activeBlue,
             ),
-          controller: _stateController,
-        ),
 
-        // Zipcode input
-        TextField(
-          style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-          // onChanged: (text) => _customerAddEditBloc.zipcodeSink.add(text),
-          decoration: InputDecoration(
-            border: InputBorder.none,
-            contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-            labelText: 'ZipCode',
-            hintText: 'Zipcode', 
-            // errorText: errorSnapshot.data == 0 ? Localization.of(context).zipcodeEmpty : null
-          ),
-          controller: _zipcodeController,
+            // Address input
+            TextField(
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+              // onChanged: (text) => _customerAddEditBloc.addressSink.add(text),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                labelText: 'Address',
+                hintText: 'Address', 
+                // errorText: errorSnapshot.data == 1 ? Localization.of(context).addressEmpty : null
+              ),
+              controller: _addressController,
+            ),
+
+            // City input
+            TextField(
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+              // onChanged: (text) => _customerAddEditBloc.citySink.add(text),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                labelText: 'City',
+                hintText: "City", 
+                // errorText: errorSnapshot.data == 0 ? Localization.of(context).cityEmpty : null
+              ),
+              controller: _cityController,
+            ),
+
+            // State input
+            TextField(
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+              // onChanged: (text) => _customerAddEditBloc.stateSink.add(text),
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                labelText: 'State',
+                hintText: "State", 
+                // errorText: errorSnapshot.data == 0 ? Localization.of(context).stateEmpty : null
+                ),
+              controller: _stateController,
+            ),
+
+            // Zipcode input
+            TextField(
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+              // onChanged: (text) => _customerAddEditBloc.zipcodeSink.add(text),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                labelText: 'ZipCode',
+                hintText: 'Zipcode', 
+                // errorText: errorSnapshot.data == 0 ? Localization.of(context).zipcodeEmpty : null
+              ),
+              controller: _zipcodeController,
+            ),
+          ],
         ),
-      ],
     );
   }
 }
