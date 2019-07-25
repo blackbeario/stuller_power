@@ -5,7 +5,7 @@ import 'package:flutter/painting.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import './models/customer.dart';
-import './db_service.dart';
+import './services/db_service.dart';
 import './locations_list.dart';
 import './customer_map.dart';
 import './customer_form.dart';
@@ -42,7 +42,7 @@ class _CustomersState extends State<Customers> {
 
   @override
   Widget build(BuildContext context) {
-    // var customers = Provider.of<List<Customer>>(context);
+    var customers = Provider.of<List<Customer>>(context);
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       resizeToAvoidBottomInset: true,
@@ -57,11 +57,11 @@ class _CustomersState extends State<Customers> {
               initialPosition: const LatLng(35.31873, -82.46095),
               mapController: _mapController
             ),
-            flex: 2,
+            flex: 3,
           ),
           Flexible(
-            flex: 3,
-            child: CustomerList(mapController: _mapController)
+            flex: 2,
+            child: CustomerList(customers: customers, mapController: _mapController)
           )
         ]
       ),
@@ -74,10 +74,14 @@ class _CustomersState extends State<Customers> {
 class CustomerList extends StatefulWidget {
   CustomerList({
     Key key,
+    this.customers,
     @required this.mapController,
   }) : super(key: key);
 
+  // The original stream of customers.
+  List<Customer> customers = List();
   final Completer<GoogleMapController> mapController;
+
   @override
   _CustomerListState createState() => _CustomerListState();
 }
@@ -86,18 +90,13 @@ class _CustomerListState extends State<CustomerList> {
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
 
-  List<Customer> _customers = List();
   List<Customer> filteredCustomers = List();
 
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration.zero,() {
-      var customers = Provider.of<List<Customer>>(context);
       setState(() {
-        _customers = customers;
-        filteredCustomers = _customers;
-      });
+        filteredCustomers = widget.customers;
     });
   }
 
@@ -121,7 +120,6 @@ class _CustomerListState extends State<CustomerList> {
 
   @override
   Widget build(BuildContext context) {
-    
     if (filteredCustomers == null) {
       return Center(
         child: CupertinoActivityIndicator(
@@ -133,97 +131,97 @@ class _CustomerListState extends State<CustomerList> {
     return Container(
       decoration: new BoxDecoration(color: Colors.white),
       child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(
-          child: ListView.separated(
-            itemCount: filteredCustomers.length,
-            shrinkWrap: true,
-            separatorBuilder: (context, index) {
-              return Divider(height: 0);
-            },
-            itemBuilder: (context, index) {
-              if (index < filteredCustomers.length) {
-                return CustomerTile(
-                  callback: callback,
-                  changed: _changed,
-                  customers: _customers,
-                  db: db,
-                  filtered: filteredCustomers,
-                  index: index,
-                  lastItem: index == filteredCustomers.length -1,
-                  customer: filteredCustomers[index],
-                  mapController: widget.mapController,
-                );
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Expanded(
+            child: ListView.separated(
+              itemCount: filteredCustomers.length,
+              shrinkWrap: true,
+              separatorBuilder: (context, index) {
+                return Divider(height: 0);
+              },
+              itemBuilder: (context, index) {
+                if (index < filteredCustomers.length) {
+                  return CustomerTile(
+                    callback: callback,
+                    changed: _changed,
+                    customers: widget.customers,
+                    db: db,
+                    filtered: filteredCustomers,
+                    index: index,
+                    lastItem: index == filteredCustomers.length -1,
+                    customer: filteredCustomers[index],
+                    mapController: widget.mapController,
+                  );
+                }
+                return Text('loading...');
               }
-              return Text('loading...');
-            }
-          ),
-        ),
-
-        _searchVisible ? new Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: <Widget>[
-            Expanded(
-              flex: 11,
-              child: CupertinoTextField(
-                padding: EdgeInsets.all(10.0),
-                expands: true,
-                autofocus: true,
-                minLines: null,
-                maxLines: null,
-                placeholder: " search",
-                onChanged: (string) {
-                  setState(() {
-                    filteredCustomers = _customers
-                      .where((customer) => (customer.firstName.toLowerCase()
-                        .contains(string.toLowerCase()) ||
-                        customer.lastName.toLowerCase().contains(string.toLowerCase())
-                        || customer.email.toLowerCase().contains(string.toLowerCase())))
-                      .toList();
-                  });
-                },
-              ),
             ),
-            Expanded(
-              flex: 1,
-              child: new CupertinoButton(
-                padding: EdgeInsets.only(right: 10.0),
-                child: Icon(CupertinoIcons.clear, size: 44,),
-                onPressed: () {
-                  _changed(false, "search");
-                  filteredCustomers = _customers;
-                },
-              ),
-            )
-          ]
-        ) : Row(
-          children: <Widget>[
-            Expanded(
-              child: Container(
-                alignment: Alignment.bottomRight,
-                // color: Colors.yellow,
-                child: CupertinoButton(
-                  borderRadius: BorderRadius.zero,
-                  padding: EdgeInsets.fromLTRB(340.0, 0, 20, 0),
-                  // color: Colors.grey,
-                  child: Icon(CupertinoIcons.search),
-                  onPressed: () {
-                    _changed(true, "search");
+          ),
+
+          _searchVisible ? new Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: <Widget>[
+              Expanded(
+                flex: 11,
+                child: CupertinoTextField(
+                  padding: EdgeInsets.all(10.0),
+                  expands: true,
+                  autofocus: true,
+                  minLines: null,
+                  maxLines: null,
+                  placeholder: " search",
+                  onChanged: (string) {
+                    setState(() {
+                      filteredCustomers = widget.customers
+                        .where((customer) => (customer.firstName.toLowerCase()
+                          .contains(string.toLowerCase()) ||
+                          customer.lastName.toLowerCase().contains(string.toLowerCase())
+                          || customer.email.toLowerCase().contains(string.toLowerCase())))
+                        .toList();
+                    });
                   },
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+              Expanded(
+                flex: 1,
+                child: new CupertinoButton(
+                  padding: EdgeInsets.only(right: 10.0),
+                  child: Icon(CupertinoIcons.clear, size: 44,),
+                  onPressed: () {
+                    _changed(false, "search");
+                    filteredCustomers = widget.customers;
+                  },
+                ),
+              )
+            ]
+          ) : Row(
+            children: <Widget>[
+              Expanded(
+                child: Container(
+                  alignment: Alignment.bottomRight,
+                  // color: Colors.yellow,
+                  child: CupertinoButton(
+                    borderRadius: BorderRadius.zero,
+                    padding: EdgeInsets.fromLTRB(340.0, 0, 20, 0),
+                    // color: Colors.grey,
+                    child: Icon(CupertinoIcons.search),
+                    onPressed: () {
+                      _changed(true, "search");
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
-class CustomerTile extends StatefulWidget {
+class CustomerTile extends StatelessWidget {
   CustomerTile({
     Key key,
     this.callback,
@@ -239,7 +237,7 @@ class CustomerTile extends StatefulWidget {
 
   final Function callback;
   final changed;
-  final List<Customer> customers;
+  List<Customer> customers;
   final db;
   List<Customer> filtered;
   final int index;
@@ -248,15 +246,9 @@ class CustomerTile extends StatefulWidget {
   final Completer<GoogleMapController> mapController;
 
   @override
-  _CustomerTileState createState() => _CustomerTileState();
-}
-
-class _CustomerTileState extends State<CustomerTile> {
-
-  @override
   Widget build(BuildContext context) {
     return FutureBuilder<CustomerLocation>(
-      future: widget.db.getLocation(widget.customer.id),
+      future: db.getLocation(customer.id),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Material(
@@ -269,30 +261,33 @@ class _CustomerTileState extends State<CustomerTile> {
         else if (snapshot.hasData) {
           return Material(
             child: InkWell(
-            onTap: () {
-              _goToLocation(widget.mapController, snapshot.data.position);
-              widget.callback(
-                widget.filtered = widget.customers
-              );
-            },
+              onTap: () {
+                _goToLocation(mapController, snapshot.data.position);
+                callback(
+                  filtered = customers
+                );
+              },
               onDoubleTap: () async {
                 await Navigator.of(context).push(
                   CupertinoPageRoute(builder: (context) {
-                    return CustomerDetails(widget.customer);
+                    return StreamProvider<Customer>.value(
+                      stream: db.streamCustomer(customer.id),
+                      child: CustomerDetails(customer.id),
+                    );
                   }),
                 );
-                 await widget.callback(
-                  widget.filtered = widget.customers
+                await callback(
+                  filtered = customers
                 );
               },
               // Call the customer
-              onLongPress: () {_callCustomer(widget.customer, context);},
+              onLongPress: () {_callCustomer(customer, context);},
               child: ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 0),
-                leading: Icon(Icons.person_pin_circle, color: widget.db.markerColor(snapshot.data.area), size: 36),
-                title: Text(widget.customer.firstName + ' ' + widget.customer.lastName),
-                subtitle: Text(widget.customer.email),
+                leading: Icon(Icons.person_pin_circle, color: db.markerColor(snapshot.data.area), size: 36),
+                title: Text(customer.firstName + ' ' + customer.lastName),
+                subtitle: Text(customer.email),
                 trailing: Icon(Icons.phone, color: Colors.green),
               ),
             ),
@@ -311,59 +306,30 @@ class _CustomerTileState extends State<CustomerTile> {
     final controller = await mapController.future;
     await controller.animateCamera(CameraUpdate.newLatLngZoom(LatLng(lat, long), 16));
   }
-
-  Future<bool> _callCustomer(customer, BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('Call ' + customer.firstName + ' ' + customer.lastName + '?'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Okay'),
-            isDestructiveAction: true,
-            onPressed: () {
-              bool hasMain = customer.main != '';
-              var phone = hasMain ? customer.main : customer.mobile;
-              UrlLauncher.launch("tel:" + phone);
-              Navigator.pop(context, 'Discard');
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
-    return Future.value(false);
-  }
 }
 
 
 /// Customer Details screen
-class CustomerDetails extends StatefulWidget {
-  final Customer customer;
-  const CustomerDetails(this.customer);
-
-  @override
-  _CustomerDetailsState createState() => _CustomerDetailsState();
-}
-
-class _CustomerDetailsState extends State<CustomerDetails> {
+class CustomerDetails extends StatelessWidget {
+  final String customerId;
+  CustomerDetails(this.customerId);
   final db = DatabaseService();
+  Customer customer;
   
   @override
   Widget build(BuildContext context) {
+    var customer = Provider.of<Customer>(context);
+    if (customer == null) {
+      return CupertinoActivityIndicator(animating: true);
+    }
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       navigationBar: CupertinoNavigationBar(
-        middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
+        middle: Text('${customer.firstName}' + ' ' + '${customer.lastName}'),
         trailing: CupertinoButton(
           child: Text('Edit', style: TextStyle(fontSize: 12)),
-          onPressed: () => _editCustomer(context)
+          onPressed: () => _editCustomer(customer, context)
         ),
       ),
       child: Card(
@@ -378,9 +344,27 @@ class _CustomerDetailsState extends State<CustomerDetails> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
+                  ListTile(
+                    leading: Icon(Icons.email, color: Colors.orangeAccent),
+                    title: Text(customer.email),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.note_add, color: Colors.orangeAccent),
+                    title: Text(customer.notes),
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.phone, color: Colors.green),
+                    title: Text(customer.main),
+                    onTap: () {_callCustomer(customer, context);},
+                  ),
+                  ListTile(
+                    leading: Icon(Icons.phone, color: Colors.green),
+                    title: Text(customer.mobile),
+                    onTap: () {_callCustomer(customer, context);},
+                  ),
                   StreamProvider<List<CustomerLocation>>.value(
-                    stream: db.streamlocations(widget.customer.id),
-                    child: Locations(customer: widget.customer),
+                    stream: db.streamlocations(customer.id),
+                    child: Locations(customer: customer),
                   )
                 ],
               ),
@@ -391,23 +375,23 @@ class _CustomerDetailsState extends State<CustomerDetails> {
     );
   }
 
-   Future<bool> _editCustomer(BuildContext context) {
+  Future<bool> _editCustomer(customer, BuildContext context) {
     showCupertinoDialog(context: context, builder: (BuildContext context) {
       return CupertinoAlertDialog(
         title: Text('Edit Customer?'),
         content: Text('Are you sure you really want to update this customer?' 
-          + ' This will affect all instances of this customer on all devices immediately.'),
+          + ' This will immediately affect all instances of this customer on all devices.'),
         actions: <Widget>[
           CupertinoDialogAction(
             child: Text('Yes'),
-            isDestructiveAction: true,
+            isDestructiveAction: false,
             onPressed: () async {
+              Navigator.pop(context, 'Discard');
               await Navigator.of(context).push(
                 CupertinoPageRoute(builder: (context) {
-                  return CustomerAddEdit(widget.customer, );
+                  return CustomerAddEdit(customer);
                 }),
               );
-              Navigator.pop(context, 'Discard');
             }
           ),
           CupertinoDialogAction(
@@ -422,4 +406,32 @@ class _CustomerDetailsState extends State<CustomerDetails> {
     });
     return Future.value(false);
   }
+}
+
+Future<bool> _callCustomer(customer, BuildContext context) {
+  showCupertinoDialog(context: context, builder: (BuildContext context) {
+    return CupertinoAlertDialog(
+      title: Text('Call ' + customer.firstName + ' ' + customer.lastName + '?'),
+      actions: <Widget>[
+        CupertinoDialogAction(
+          child: Text('Okay'),
+          isDestructiveAction: true,
+          onPressed: () {
+            bool hasMain = customer.main != '';
+            var phone = hasMain ? customer.main : customer.mobile;
+            UrlLauncher.launch("tel:" + phone);
+            Navigator.pop(context, 'Discard');
+          }
+        ),
+        CupertinoDialogAction(
+          child: Text('Cancel'),
+          isDefaultAction: true,
+          onPressed: () {
+            Navigator.pop(context, 'Cancel');
+          },
+        ),
+      ],
+    );
+  });
+  return Future.value(false);
 }

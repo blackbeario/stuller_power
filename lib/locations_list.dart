@@ -2,10 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './models/customer.dart';
-import './db_service.dart';
+import './services/db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:url_launcher/url_launcher.dart' as UrlLauncher;
 import 'package:date_format/date_format.dart';
 
 class Locations extends StatelessWidget {
@@ -38,7 +37,7 @@ class Locations extends StatelessWidget {
         return ExpansionTile(
           initiallyExpanded: true,
           key: PageStorageKey<CustomerLocation>(location),
-          title: Text(location.name),
+          title: Text(location.name.toUpperCase()),
           children: <Widget>[
             LocationTile(billing: _billing, customer: customer, location: location)
           ],
@@ -66,17 +65,12 @@ class LocationTile extends StatelessWidget {
     return Column(
       children: <Widget>[
         ListTile(
-          leading: Icon(_billing ? CupertinoIcons.check_mark : CupertinoIcons.clear),
-          title: Text(_billing ? 'Primary Billing' : 'Do Not Bill'),
-        ),
-        ListTile(
           leading: Icon(Icons.location_on, color: CupertinoColors.destructiveRed),
           title: Text(location.address + '\n' + location.city + ' ' + location.state + ', ' + location.zipcode),
         ),
         ListTile(
-          leading: Icon(Icons.phone, color: Colors.green),
-          title: Text(_getPhoneNumber(customer)),
-          onTap: () {_requestPop(customer, customer.main, context);},
+          leading: Icon(_billing ? CupertinoIcons.check_mark : CupertinoIcons.clear),
+          title: Text(_billing ? 'Primary Billing' : 'Do Not Bill'),
         ),
         GeneratorTile(customer: customer, location: location),
       ],
@@ -247,37 +241,4 @@ class GeneratorDetail extends StatelessWidget {
       ),
     );
   }
-}
-
-_getPhoneNumber(customer) {
-  bool hasMain = customer.main != '';
-  var phone = hasMain ? customer.main : customer.mobile;
-  return phone;
-}
-
-Future<bool> _requestPop(customer, phone, BuildContext context) {
-  showCupertinoDialog(context: context, builder: (BuildContext context) {
-    return CupertinoAlertDialog(
-      title: Text('Call ' + customer.firstName + ' ' + customer.lastName + '?'),
-      actions: <Widget>[
-        CupertinoDialogAction(
-          child: Text('Okay'),
-          isDestructiveAction: true,
-          onPressed: () {
-            var phone = _getPhoneNumber(customer);
-            UrlLauncher.launch("tel:" + phone);
-            Navigator.pop(context, 'Discard');
-          }
-        ),
-        CupertinoDialogAction(
-          child: Text('Cancel'),
-          isDefaultAction: true,
-          onPressed: () {
-            Navigator.pop(context, 'Cancel');
-          },
-        ),
-      ],
-    );
-  });
-  return Future.value(false);
 }

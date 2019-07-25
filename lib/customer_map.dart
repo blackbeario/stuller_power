@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import './models/customer.dart';
-import './db_service.dart';
+import './services/db_service.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -133,7 +133,7 @@ class _CustomerMapState extends State<CustomerMap> {
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(pictureRecorder);
     final Paint _paint = Paint()..color = _color;
-    canvas.drawCircle(Offset(width/2, height/2), height/2, _paint);
+    canvas.drawCircle(Offset(width/3.33, height/3.33), height/3.33, _paint);
     final img = await pictureRecorder.endRecording().toImage(width, height);
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return data.buffer.asUint8List();
@@ -152,12 +152,12 @@ class _CustomerMapState extends State<CustomerMap> {
             title: name,
             snippet: address,
             onTap: () async {
-                await Navigator.of(context).push(
-                  CupertinoPageRoute(builder: (context) {
-                    return CustomerDetails(customer);
-                  }),
-                );
-              },
+              await Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) {
+                  return CustomerDetails(customer.id);
+                }),
+              );
+            },
           ),
           icon: BitmapDescriptor.fromBytes(markerIcon),
         ),
@@ -194,7 +194,6 @@ class _CustomerMapState extends State<CustomerMap> {
 
   @override
   dispose() {
-    // subscription.cancel();
     super.dispose();
   }
 }

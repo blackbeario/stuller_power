@@ -4,12 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import './models/customer.dart';
-import './db_service.dart';
+import './services/db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 
 class CustomerAddEdit extends StatefulWidget {
-
   final Customer customer;
   const CustomerAddEdit(this.customer);
 
@@ -20,12 +19,12 @@ class CustomerAddEdit extends StatefulWidget {
 class _CustomerAddEditState extends State<CustomerAddEdit>{
   final db = DatabaseService();
   final auth = FirebaseAuth.instance;
-  // String _area;
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _cellController = TextEditingController();
+  final _mainController = TextEditingController();
+  final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
+  final _notesController = TextEditingController();
 
   _CustomerAddEditState(Customer customer);
 
@@ -34,19 +33,36 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
     super.initState();
       _firstNameController.text = widget.customer.firstName;
       _lastNameController.text = widget.customer.lastName;
-      _phoneController.text = widget.customer.main;
-      _cellController.text = widget.customer.mobile;
+      _mainController.text = widget.customer.main;
+      _mobileController.text = widget.customer.mobile;
       _emailController.text = widget.customer.email;
+      _notesController.text = widget.customer.notes;
   }
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-    _phoneController.dispose();
-    _cellController.dispose();
+    _mainController.dispose();
+    _mobileController.dispose();
     _emailController.dispose();
+    _notesController.dispose();
     super.dispose();
+  }
+
+  String locid; bool billing; String address; String area; String city; String state; String zip;
+
+  // Pass LocationForm child class text field values via callback.
+  void callback(_locid, _billing, _address, _area, _city, _state, _zip) {
+    setState(() {
+      locid = _locid;
+      billing = _billing;
+      address = _address;
+      area = _area;
+      city = _city;
+      state = _state;
+      zip = _zip;
+    });
   }
 
   String _validatePhoneNumber(String value) {
@@ -64,6 +80,10 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       navigationBar: CupertinoNavigationBar(
         middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
+        trailing: CupertinoButton(
+          child: Text('Save', style: TextStyle(fontSize: 12)),
+          onPressed: () => _updateCustomer(context)
+        ),
       ),
       child: Card(
         shape: RoundedRectangleBorder(
@@ -86,6 +106,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
                   // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _firstNameController,
+                keyboardType: TextInputType.text
               ),
 
               // Last Name input
@@ -99,6 +120,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
                   // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _lastNameController,
+                keyboardType: TextInputType.text
               ),
 
               // Email input
@@ -112,6 +134,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
                   // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress
               ),
               
               // Main phone input
@@ -126,7 +149,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
                   labelText: 'Main',
                   // errorText: errorSnapshot.data == 0 ? Localization.of(context).phoneEmpty : null
                 ),
-                controller: _phoneController,
+                controller: _mainController,
                 keyboardType: TextInputType.phone,
               ),
 
@@ -138,12 +161,27 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
                 decoration: InputDecoration(
                   icon: Icon(Icons.phone),
                   contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-                  labelText: 'Cell',
-                  hintText: 'Cell',
+                  labelText: 'Mobile',
+                  hintText: 'Mobile',
                   // errorText: errorSnapshot.data == 0 ? Localization.of(context).phoneEmpty : null
                 ),
-                controller: _cellController,
+                controller: _mobileController,
                 keyboardType: TextInputType.phone,
+              ),
+
+              // Notes input
+              TextFormField(
+                minLines: 2,
+                maxLines: 10,
+                style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                decoration: InputDecoration(
+                  icon: Icon(Icons.note),
+                  contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                  labelText: 'Notes',
+                  hintText: 'Notes',
+                ),
+                controller: _notesController,
+                keyboardType: TextInputType.multiline,
               ),
 
               // Add some space between sections
@@ -151,7 +189,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
 
               StreamProvider<List<CustomerLocation>>.value(
                 stream: db.streamlocations(widget.customer.id),
-                child: LocationWidget(customer: widget.customer),
+                child: LocationWidget(customer: widget.customer, callback: callback),
               ),
             ]
           )
@@ -159,14 +197,51 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
       ),
     );
   }
+
+  Future<bool> _updateCustomer(BuildContext context) {
+    showCupertinoDialog(context: context, builder: (BuildContext context) {
+      return CupertinoAlertDialog(
+        title: Text('Update Customer'),
+        content: Text('This will immediately update this customer data.'),
+        actions: <Widget>[
+          CupertinoDialogAction(
+            child: Text('Confirm'),
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Discard');
+              db.updateCustomer(
+                widget.customer.id, _firstNameController.text, _lastNameController.text, 
+                _emailController.text, _mainController.text, _mobileController.text,
+                _notesController.text
+              );
+              // db.updateLocation(
+              //   widget.customer.id, billing, address, area, city, state, zip
+              // );
+              
+            }
+          ),
+          CupertinoDialogAction(
+            child: Text('Cancel'),
+            isDefaultAction: true,
+            onPressed: () {
+              Navigator.pop(context, 'Cancel');
+            },
+          ),
+        ],
+      );
+    });
+    return Future.value(false);
+  }
 }
 
 class LocationWidget extends StatefulWidget {
   LocationWidget({
     Key key,
+    this.callback,
     @required this.customer,
   }) : super(key: key);
 
+  final Function callback;
   final Customer customer;
   final db = DatabaseService();
 
@@ -191,7 +266,7 @@ class _LocationWidgetState extends State<LocationWidget> {
       children: locations.map((location) {
         bool _billing = location.billing;
         if(locations.length == 1) {
-          return LocationForm(location: location, billing: _billing);
+          return LocationForm(location: location, billing: _billing, callback: widget.callback,);
         }
         return ExpansionTile(
           initiallyExpanded: false,
@@ -208,11 +283,13 @@ class _LocationWidgetState extends State<LocationWidget> {
 class LocationForm extends StatefulWidget {
   LocationForm({
     Key key,
+    this.callback,
     @required this.location,
     @required this.billing,
   }) : super(key: key);
 
-  bool billing;
+  String locid; bool billing; String address; String area; String city; String state; String zip;
+  final Function callback;
   final CustomerLocation location;
 
   @override
@@ -279,8 +356,12 @@ class _LocationFormState extends State<LocationForm> {
             // Billing
             CheckboxListTile(
               value: widget.billing,
-              // onChanged: (bool) => _customerAddEditBloc.billingSink.add(bool),
-              onChanged: _billingChanged,
+              onChanged: (bool) =>
+                _billingChanged,
+                // widget.callback(
+                //   widget.billing = widget.billing
+                // );
+              // },
               title: new Text('Billing Address?'),
               controlAffinity: ListTileControlAffinity.leading,
               activeColor: CupertinoColors.activeBlue,
@@ -288,8 +369,13 @@ class _LocationFormState extends State<LocationForm> {
 
             // Address input
             TextField(
-              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              // onChanged: (text) => _customerAddEditBloc.addressSink.add(text),
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),                
+              onEditingComplete: () {
+                print(_addressController.text);
+                widget.callback(
+                  widget.address = _addressController.text
+                );
+              },
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'Address',
@@ -302,7 +388,10 @@ class _LocationFormState extends State<LocationForm> {
             // City input
             TextField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              // onChanged: (text) => _customerAddEditBloc.citySink.add(text),
+              onChanged: (text) =>
+                widget.callback(
+                  widget.address = _cityController.text
+                ),
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'City',
@@ -315,7 +404,10 @@ class _LocationFormState extends State<LocationForm> {
             // State input
             TextField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              // onChanged: (text) => _customerAddEditBloc.stateSink.add(text),
+              onChanged: (text) => 
+                widget.callback(
+                  widget.address = _stateController.text
+                ),
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'State',
@@ -328,7 +420,10 @@ class _LocationFormState extends State<LocationForm> {
             // Zipcode input
             TextField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              // onChanged: (text) => _customerAddEditBloc.zipcodeSink.add(text),
+              onChanged: (text) =>
+                widget.callback(
+                  widget.address = _zipcodeController.text
+                ),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),

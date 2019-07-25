@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flare_flutter/flare_actor.dart';
-import 'package:stullerPower/models/auth_service.dart';
+import './services/auth_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stullerPower/main.dart';
 

@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 // import 'package:geoflutterfire/geoflutterfire.dart';
 // import 'package:location/location.dart';
 import 'dart:async';
-import './models/customer.dart';
-import './models/user.dart';
-import './models/job.dart';
+import '../models/customer.dart';
+import '../models/user.dart';
+import '../models/job.dart';
 
 class DatabaseService {
   final Firestore _db = Firestore.instance;
@@ -16,7 +16,7 @@ class DatabaseService {
     return Customer.fromFirestore(snap);
   }
 
-  /// Get a stream of a single document
+  /// Get a stream of a single document.
   Stream<Customer> streamCustomer(String id) {
     return _db
       .collection('customers')
@@ -25,14 +25,14 @@ class DatabaseService {
       .map((snap) => Customer.fromFirestore(snap));
   }
 
-  /// Customers collection
+  /// Customers collection stream for map and list.
   Stream<List<Customer>> streamCustomers() {
-    var ref = _db.collection('customers');
+    var ref = _db.collection('customers').orderBy('lastName');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
 
-  /// Single customer location for map list screen
+  /// Single customer location for map list screen.
   Stream<List<CustomerLocation>> primarylocation(String id) {
     var ref = _db.collection('customers').document(id).collection('locations').limit(1);
     return ref.snapshots().map((list) =>
@@ -44,21 +44,21 @@ class DatabaseService {
     return CustomerLocation.fromFirestore(snap);
   }
 
-  /// All customer locations, in case they have more than one
+  /// All customer locations, in case they have more than one.
   Stream<List<CustomerLocation>> streamlocations(String id) {
-    var ref = _db.collection('customers').document(id).collection('locations');
+    var ref = _db.collection('customers').document(id).collection('locations').orderBy('name');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
   }
 
-  /// Generator data per location
+  /// Generator data per location.
   Future<Generator> getGenerator(String cid, String lid) async {
     var snap = await _db.collection('customers').document(cid)
         .collection('locations').document(lid).collection('generators').document('gen').get();
     return Generator.fromFirestore(snap);
   }
 
-  /// Jobs collection
+  /// Jobs collection stream.
   Stream<List<Job>> streamJobs(FirebaseUser user) {
     var ref = _db.collection('jobs').where('techID', isEqualTo: user.uid);
     return ref.snapshots().map((list) =>
@@ -86,6 +86,18 @@ class DatabaseService {
       );
   }
 
+  Future<void> updateCustomer(
+    String id, String firstName, String lastName, String email, String main, String mobile, String notes
+  ) async {
+    var $now = DateTime.now();
+    var updated = $now.millisecondsSinceEpoch;
+    return await _db.collection('customers').document(id).updateData({
+      'updated': updated, 'firstName': firstName, 'lastName': lastName, 
+      'email': email  ?? '', 'main': main  ?? '', 'mobile': mobile ?? '',
+      'notes': notes
+    });
+  }
+
   Future<void> addLocation(FirebaseUser user, dynamic location) {
     return _db
       .collection('customers')
@@ -103,6 +115,15 @@ class DatabaseService {
       .delete();
   }
 
+  Future<void> updateLocation(
+    String id, bool billing, String address, String area, String city, String state, String zipcode
+  ) async {
+    return await _db.collection('customers').document(id).collection('locations').document('primary').updateData({
+      'billing': billing, 'address': address ?? '', 'area': area ?? '', 
+      'city': city  ?? '', 'state': state  ?? '', 'zipcode': zipcode ?? ''
+    });
+  }
+
   Future<void> removeJob(FirebaseUser user, String id) {
     return _db
       .collection('jobs')
@@ -112,13 +133,13 @@ class DatabaseService {
 
   Future<void> startJob(String id) async {
     var $now = DateTime.now().millisecondsSinceEpoch;
-    return await _db.collection('jobs').document(id).updateData({'started': $now});  
+    return await _db.collection('jobs').document(id).updateData({'started': $now});
   }
 
   Future<void> updateDone(String id, bool done) async {
     var $now = DateTime.now();
     var ended = done ? $now.millisecondsSinceEpoch : null;
-    return await _db.collection('jobs').document(id).updateData({'done': done, 'ended': ended});  
+    return await _db.collection('jobs').document(id).updateData({'done': done, 'ended': ended});
   }
 
   // Future<DocumentReference> addGeoPoint(FirebaseUser user) async {

@@ -2,13 +2,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:stullerPower/login_page.dart';
-import 'package:stullerPower/models/auth_service.dart';
+import './services/auth_service.dart';
 import 'package:stullerPower/customer_list.dart';
 import 'package:stullerPower/job_list.dart';
 import 'package:stullerPower/profile.dart';
 import 'package:flutter/cupertino.dart';
 import './models/customer.dart';
-import './db_service.dart';
+import './services/db_service.dart';
 
 void main() => runApp(MyApp());
 final db = DatabaseService();
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       child: CupertinoApp(
         debugShowCheckedModeBanner: false,
         theme: CupertinoThemeData(
-          primaryColor: Color(0xFFFF2E99),
+          primaryColor: Color(0xFFFF822E),
           primaryContrastingColor: Color(0xFF007AFF), // iOS 10's default blue 
           barBackgroundColor: Color(0xFFE5E5EA)
         ),
