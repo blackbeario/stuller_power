@@ -8,6 +8,8 @@ import './services/db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 
+import 'customer_list.dart';
+
 class CustomerAddEdit extends StatefulWidget {
   final Customer customer;
   const CustomerAddEdit(this.customer);
@@ -82,7 +84,7 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
         middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
         trailing: CupertinoButton(
           child: Text('Save', style: TextStyle(fontSize: 12)),
-          onPressed: () => _updateCustomer(context)
+          onPressed: () => _updateCustomer(widget.customer, context)
         ),
       ),
       child: Card(
@@ -198,38 +200,16 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
     );
   }
 
-  Future<bool> _updateCustomer(BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('Update Customer'),
-        content: Text('This will immediately update this customer data.'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Confirm'),
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Discard');
-              db.updateCustomer(
-                widget.customer.id, _firstNameController.text, _lastNameController.text, 
-                _emailController.text, _mainController.text, _mobileController.text,
-                _notesController.text
-              );
-              // db.updateLocation(
-              //   widget.customer.id, billing, address, area, city, state, zip
-              // );
-              
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
+  Future<bool> _updateCustomer(customer, BuildContext context) {
+    Navigator.pop(context);
+    db.updateCustomer(
+      widget.customer.id, _firstNameController.text, _lastNameController.text, 
+      _emailController.text, _mainController.text, _mobileController.text,
+      _notesController.text
+    );
+    // db.updateLocation(
+    //   widget.customer.id, billing, address, area, city, state, zip
+    // );
     return Future.value(false);
   }
 }
