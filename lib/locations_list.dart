@@ -21,9 +21,7 @@ class Locations extends StatelessWidget {
     var locations = Provider.of<List<CustomerLocation>>(context);
 
     if (locations == null) {
-      return Center(
-        child: Text('No locations. Add one for this customer.')
-      );
+      return Text('No locations. Add one for this customer.');
     }
 
     return ListView(
@@ -32,7 +30,9 @@ class Locations extends StatelessWidget {
         bool _billing = location.billing;
 
         if(locations.length == 1) {
-          return LocationTile(billing: _billing, customer: customer, location: location);
+          return LocationTile(
+            billing: _billing, customer: customer, location: location
+          );
         }
         return ExpansionTile(
           initiallyExpanded: true,
@@ -66,7 +66,12 @@ class LocationTile extends StatelessWidget {
       children: <Widget>[
         ListTile(
           leading: Icon(Icons.location_on, color: CupertinoColors.destructiveRed),
-          title: Text(location.address + '\n' + location.city + ' ' + location.state + ', ' + location.zipcode),
+          title: location.address != '?' ? 
+            Text(location.address + '\n' + location.city + ' ' + location.state + ', ' + location.zipcode) :  
+            Text(
+              'Customer has no address in database! Edit this customer to correct address.',
+              style: TextStyle(color: CupertinoColors.destructiveRed)
+            ),
         ),
         ListTile(
           leading: Icon(_billing ? CupertinoIcons.check_mark : CupertinoIcons.clear),

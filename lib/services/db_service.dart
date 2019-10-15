@@ -26,8 +26,18 @@ class DatabaseService {
   }
 
   /// Customers collection stream for map and list.
+  /// 
+  /// Considering the customer db is so large, db reads can be easily be over
+  /// the Firestore 50k daily doc read limit in minutes with several users.
+  /// Need to either design a UI where we aren't reading all the customers on load
+  /// or limit the snapshot reads until needed.
+  /// 
+  /// Or, optionally cache customers on user's device to avoid additional reads.
+  /// 
+  /// Or, redesign customer data to include locations and generators on main customerID
+  /// document instead of subcollections. Dammit.
   Stream<List<Customer>> streamCustomers() {
-    var ref = _db.collection('customers').orderBy('lastName');
+    var ref = _db.collection('customers').limit(50);
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
@@ -154,7 +164,7 @@ class DatabaseService {
 
   markerColor(String area) {
     switch (area) {
-      case 'Cedar Mountain':
+      case 'Cedar Mtn':
         return Colors.pink[200];
         break;
       case 'Flat Rock':
@@ -165,6 +175,33 @@ class DatabaseService {
         break;
       case 'Cummings Cove':
         return Colors.red[300];
+        break;
+      case 'Hendersonville':
+        return Colors.green[300];
+        break;
+      case 'Brevard':
+        return Colors.teal[300];
+        break;
+      case 'Rutherfordton':
+        return Colors.purple[300];
+        break;
+      case 'Fairview':
+        return Colors.orange[300];
+        break;
+      case 'Lake Lure':
+        return Colors.grey[300];
+        break;
+      case 'Fletcher':
+        return Colors.brown[300];
+        break;
+      case 'Asheville':
+        return Colors.amber[300];
+        break;
+      case 'Weaverville':
+        return Colors.amber[700];
+        break;
+      case 'Horse Shoe':
+        return Colors.red[700];
         break;
       default:
     }

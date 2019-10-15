@@ -48,28 +48,11 @@ class CustomerLocation {
       billing: data['billing'] ?? true,
       area: data['area'] ?? '',
       name: data['name'] ?? '',
-      address: data['address'] ?? '',
-      city: data['city'] ?? '',
+      address: data['address'] ?? 'Address unknown',
+      city: data['city'] ?? 'no city provided',
       state: data['state'] ?? '',
       zipcode: data['zipcode'] ?? '',
-      position: data['position'] ?? ''
-    );
-  }
-}
-
-
-class Position {
-  final String geohash;
-  final GeoPoint geopoint;
-
-  Position({ this.geohash, this.geopoint });
-
-  factory Position.fromFirestore(DocumentSnapshot doc) {
-    Map data = doc.data;
-    
-    return Position(
-      geohash: data['geohash'] ?? '',
-      geopoint: data['geopoint'] ?? ''
+      position: data['position'] ?? null
     );
   }
 }
@@ -86,7 +69,7 @@ class Generator {
   final String transferLocation;
   final String transferSerial;
   final String warranty;
-  final bool wifi;
+  final String wifi;
 
   Generator({ this.airFilter, this.battery, this.exerciseTime, 
   this.model, this.oilFilter, this.serial, this.sparkPlugs, this.transferLocation,
@@ -97,17 +80,17 @@ class Generator {
     Map data = doc.data;
 
     return Generator(
-      airFilter: data['airFilter'] ?? '',
+      airFilter: data['air filter'] ?? '',
       battery: data['battery'] != null ? DateTime.fromMillisecondsSinceEpoch(data['battery']) : null,
-      exerciseTime: data['exerciseTime'] ?? '',
+      exerciseTime: data['exercise time'] ?? '',
       model: data['model'] ?? '',
-      oilFilter: data['oilFilter'] ?? '',
+      oilFilter: data['oil filter'] ?? '',
       serial: data['serial'] ?? '',
-      sparkPlugs: data['sparkPlugs'] ?? '',
-      transferLocation: data['transferLocation'] ?? '',
-      transferSerial: data['transferSerial'] ?? '',
+      sparkPlugs: data['spark plugs'] ?? '',
+      transferLocation: data['xfer location'] ?? '',
+      transferSerial: data['xfer serial'] ?? '',
       warranty: data['warranty'] ?? '',
-      wifi: data['wifi'] ?? false,
+      wifi: data['wifi'] ?? '',
     );
   }
 }

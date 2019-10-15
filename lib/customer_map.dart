@@ -58,7 +58,7 @@ class _CustomerMapState extends State<CustomerMap> {
         GoogleMap(
           initialCameraPosition: CameraPosition(
             target: widget.initialPosition,
-            zoom: 9
+            zoom: 10
           ),
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
@@ -105,26 +105,36 @@ class _CustomerMapState extends State<CustomerMap> {
     // Stream of customers list
     var customers = Provider.of<List<Customer>>(context);
 
+    // if (customers != false) {
     customers.forEach((Customer customer) {
       var ref = firestore.collection('customers').document(customer.id).collection('locations');
       
+      /// The radius affects how many markers are shown on the map respective to the location of the user.
+      /// It does NOT affect how many customers are queried from Firestore, since
+      /// we're calling streamCustomers() as a StreamProvider in main.dart.
       double radius = 50;
       String field = 'position';
 
-      Stream<List<DocumentSnapshot>> stream = geo.collection(collectionRef: ref).within(center: center, radius: radius, field: field);
+      Stream<List<DocumentSnapshot>> stream = geo.collection(collectionRef: ref).within(
+        center: center, 
+        radius: radius, 
+        field: field,
+        strictMode: true
+      );
 
       stream.listen((List<DocumentSnapshot> documentList) {
         _updateMarkers(customer, documentList);
       });
     });
-  } 
+  }
 
   void _updateMarkers(Customer customer, List<DocumentSnapshot> documentList) {
     documentList.forEach((DocumentSnapshot document) {
       GeoPoint point = document.data['position']['geopoint'];
+      double distance = document.data['distance'];
       String area = document.data['area'];
       String address = document.data['address'];
-      _addMarker(customer, point.latitude, point.longitude, area, address);
+      _addMarker(customer, point.latitude, point.longitude, area, address, distance);
     });
   }
 
@@ -139,9 +149,10 @@ class _CustomerMapState extends State<CustomerMap> {
     return data.buffer.asUint8List();
   }
 
-  void _addMarker(Customer customer, double lat, double lng, String area, String address) async {
+  void _addMarker(Customer customer, double lat, double lng, String area, String address, double distance) async {
     final Uint8List markerIcon = await getBytesFromCanvas(40, 40, db.markerColor(area));
     final name = customer.firstName + ' ' + customer.lastName;
+    final infoText = address + '\n' + 'Distance: ' + distance.toString() + ' mi';
     setState(() {
       _markers.add(
         Marker (
@@ -150,11 +161,14 @@ class _CustomerMapState extends State<CustomerMap> {
           position: LatLng (lat, lng),
           infoWindow: InfoWindow(
             title: name,
-            snippet: address,
+            snippet: infoText,
             onTap: () async {
               await Navigator.of(context).push(
                 CupertinoPageRoute(builder: (context) {
-                  return CustomerDetails(customer.id);
+                  return StreamProvider<Customer>.value(
+                    stream: db.streamCustomer(customer.id),
+                    child: CustomerDetails(customer.id),
+                  );
                 }),
               );
             },
@@ -187,7 +201,7 @@ class _CustomerMapState extends State<CustomerMap> {
     await controller.animateCamera(CameraUpdate.newCameraPosition(
       CameraPosition(
         target: LatLng(lat,lng),
-        zoom: 9,
+        zoom: 10,
       )
     ));
   }
