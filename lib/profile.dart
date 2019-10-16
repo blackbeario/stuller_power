@@ -21,7 +21,7 @@ class Profile extends StatelessWidget {
         )
       );
     }
-    else return StreamBuilder<User>(
+    return StreamBuilder<User>(
       stream: db.streamUser(user.uid),
       builder: (context, snapshot) {
         var myUser = snapshot.data;
@@ -31,7 +31,7 @@ class Profile extends StatelessWidget {
             style: CupertinoTheme.of(context).textTheme.navTitleTextStyle),
           );
         }
-        else return CupertinoPageScaffold(
+        return CupertinoPageScaffold(
           resizeToAvoidBottomInset: true,
           navigationBar: CupertinoNavigationBar(
             middle: Text('Profile'),

@@ -8,8 +8,6 @@ import './services/db_service.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 
-import 'customer_list.dart';
-
 class CustomerAddEdit extends StatefulWidget {
   final Customer customer;
   const CustomerAddEdit(this.customer);

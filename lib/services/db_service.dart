@@ -69,7 +69,14 @@ class DatabaseService {
   }
 
   /// Jobs collection stream.
-  Stream<List<Job>> streamJobs(FirebaseUser user) {
+  Stream<List<Job>> streamJobs() {
+    var ref = _db.collection('jobs');
+    return ref.snapshots().map((list) =>
+      list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  }
+
+  /// Jobs collection stream.
+  Stream<List<Job>> streamJobsByUser(FirebaseUser user) {
     var ref = _db.collection('jobs').where('techID', isEqualTo: user.uid);
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Job.fromFirestore(doc)).toList());

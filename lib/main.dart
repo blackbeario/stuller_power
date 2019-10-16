@@ -48,12 +48,12 @@ class AppHomePage extends StatelessWidget {
         tabBar: CupertinoTabBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.home),
-              title: Text('Customers'),
+              icon: Icon(CupertinoIcons.clock),
+              title: Text('Schedule'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.clock),
-              title: Text('Jobs'),
+              icon: Icon(CupertinoIcons.home),
+              title: Text('Customers'),
             ),
             BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.profile_circled),
@@ -67,12 +67,12 @@ class AppHomePage extends StatelessWidget {
           switch (index) {
             case 0: 
               return CupertinoTabView(
-                builder: (BuildContext context) => Customers(),
+                builder: (BuildContext context) => JobList(),
               );
               break;
             case 1:
               return CupertinoTabView(
-                builder: (BuildContext context) => JobList(),
+                builder: (BuildContext context) => Customers(),
               );
               break;
             case 2:

@@ -2,30 +2,305 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:stullerPower/models/user.dart';
 import './models/job.dart';
 import './services/db_service.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:table_calendar/table_calendar.dart';
+import './job_details.dart';
 
+class JobList extends StatefulWidget {
+  @override
+  _JobListState createState() => _JobListState();
+}
 
-class JobList extends StatelessWidget {
+class _JobListState extends State<JobList> with TickerProviderStateMixin {
+  Map<DateTime, List> _events;
+  List _selectedEvents;
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
+  AnimationController _animationController;
+  CalendarController _calendarController;
+
+  @override
+  void initState() {
+    super.initState();
+    final _selectedDay = DateTime.now();
+
+    _events = {
+      _selectedDay.subtract(Duration(days: 30)): ['Event A0', 'Event B0', 'Event C0'],
+      _selectedDay.subtract(Duration(days: 27)): ['Event A1'],
+      _selectedDay.subtract(Duration(days: 20)): ['Event A2', 'Event B2', 'Event C2', 'Event D2'],
+      _selectedDay.subtract(Duration(days: 16)): ['Event A3', 'Event B3'],
+      _selectedDay.subtract(Duration(days: 10)): ['Event A4', 'Event B4', 'Event C4'],
+      _selectedDay.subtract(Duration(days: 4)): ['Event A5', 'Event B5', 'Event C5'],
+      _selectedDay.subtract(Duration(days: 2)): ['Event A6', 'Event B6'],
+      _selectedDay: ['Event A7', 'Event B7', 'Event C7', 'Event D7', 'Event E7', 'Event F7'],
+      _selectedDay.add(Duration(days: 1)): ['Event A8', 'Event B8', 'Event C8', 'Event D8'],
+      _selectedDay.add(Duration(days: 3)): Set.from(['Event A9', 'Event A9', 'Event B9']).toList(),
+      _selectedDay.add(Duration(days: 7)): ['Event A10', 'Event B10', 'Event C10'],
+      _selectedDay.add(Duration(days: 11)): ['Event A11', 'Event B11'],
+      _selectedDay.add(Duration(days: 17)): ['Event A12', 'Event B12', 'Event C12', 'Event D12'],
+      _selectedDay.add(Duration(days: 22)): ['Event A13', 'Event B13'],
+      _selectedDay.add(Duration(days: 26)): ['Event A14', 'Event B14', 'Event C14'],
+    };
+
+    _selectedEvents = _events[_selectedDay] ?? [];
+
+    _calendarController = CalendarController();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    _calendarController.dispose();
+    super.dispose();
+  }
+
+  void _onDaySelected(DateTime day, List events) {
+    print('CALLBACK: _onDaySelected');
+    setState(() {
+      _selectedEvents = events;
+    });
+  }
+
+  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
+    print('CALLBACK: _onVisibleDaysChanged');
+  }
 
   @override
   Widget build(BuildContext context) {
     var user = Provider.of<FirebaseUser>(context);
-    return CupertinoPageScaffold(
-      navigationBar: CupertinoNavigationBar(
-        middle: Text('My Jobs'),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: <Widget>[
-          StreamProvider<List<Job>>.value(
-            stream: db.streamJobs(user),
-            child: Jobs(),
+    if (user == null) {
+      return Center(
+        child: CupertinoActivityIndicator(
+          animating: true,
+        )
+      );
+    }
+    return StreamBuilder<User>(
+      stream: db.streamUser(user.uid),
+      builder: (context, snapshot) {
+        var myUser = snapshot.data;
+        if (myUser == null) {
+          return Center(
+            child: Text('Loading...',
+            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle),
+          );
+        }
+        return CupertinoPageScaffold(
+          navigationBar: CupertinoNavigationBar(
+            middle: Text('Schedule'),
           ),
-        ],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              _buildTableCalendarWithBuilders(),
+              const SizedBox(height: 8.0),
+              _buildButtons(),
+              const SizedBox(height: 8.0),
+              Expanded(child: _buildEventList()),
+              StreamProvider<List<Job>>.value(
+                // Gets a stream of jobs assigned to the logged-in user.
+                // If user has admin role, get all jobs.
+                stream: myUser.role != 'admin' ? db.streamJobsByUser(user) : db.streamJobs(),
+                child: Jobs(),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTableCalendarWithBuilders() {
+    return Material(
+      color: Colors.white,
+      child: TableCalendar(
+        rowHeight: 75,
+        calendarController: _calendarController,
+        events: _events,
+        initialCalendarFormat: CalendarFormat.month,
+        formatAnimation: FormatAnimation.slide,
+        startingDayOfWeek: StartingDayOfWeek.sunday,
+        availableGestures: AvailableGestures.all,
+        availableCalendarFormats: const {
+          CalendarFormat.week: '',
+          CalendarFormat.month: ''
+        },
+        calendarStyle: CalendarStyle(
+          outsideDaysVisible: false,
+          weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
+          markersMaxAmount: 20
+        ),
+        daysOfWeekStyle: DaysOfWeekStyle(
+          weekendStyle: TextStyle().copyWith(color: Colors.blue[600]),
+        ),
+        headerStyle: HeaderStyle(
+          centerHeaderTitle: true,
+          formatButtonVisible: false,
+          // formatButtonTextStyle: TextStyle(color: Colors.white, fontSize: 14),
+          // formatButtonDecoration: BoxDecoration(
+          //   borderRadius: BorderRadius.all(Radius.circular(12.0)),
+          //   color: Colors.deepOrange[300],
+          // ),
+          // formatButtonShowsNext: false
+        ),
+        builders: CalendarBuilders(
+          dayBuilder: (context, date, _) {
+            return Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey[50],
+              ),
+                margin: const EdgeInsets.all(6.0),
+                alignment: Alignment.center,
+                child: Text(
+                  '${date.day}',
+                  textAlign: TextAlign.center,
+                ),
+            );
+          },
+          selectedDayBuilder: (context, date, _) {
+            return FadeTransition(
+              opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.blue[300],
+                ),
+                margin: const EdgeInsets.all(6.0),
+                alignment: Alignment.center,
+                child: Text(
+                  '${date.day}',
+                  style: TextStyle().copyWith(color: Colors.white, fontSize: 16.0),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          },
+          todayDayBuilder: (context, date, _) {
+            return Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.deepOrange[300]),
+                // color: Colors.grey[50],
+              ),
+              margin: const EdgeInsets.all(6.0),
+              alignment: Alignment.center,
+              child: Text(
+                '${date.day}',
+                style: TextStyle().copyWith(fontSize: 16.0),
+                textAlign: TextAlign.center,
+              ),
+            );
+          },
+          markersBuilder: (context, date, events, holidays) {
+            final children = <Widget>[];
+            if (events.isNotEmpty) {
+              children.add(
+                Positioned(
+                  right: 1,
+                  bottom: 1,
+                  child: _buildEventsMarker(date, events),
+                ),
+              );
+            }
+            return children;
+          },
+        ),
+        onDaySelected: (date, events) {
+          _onDaySelected(date, events);
+          _animationController.forward(from: 0.0);
+        },
+        onVisibleDaysChanged: _onVisibleDaysChanged,
+      ),
+    );
+  }
+
+  Widget _buildEventsMarker(DateTime date, List events) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: _calendarController.isSelected(date)
+            ? Colors.deepOrange
+            : _calendarController.isToday(date) ? Colors.blue[200] : Colors.blueGrey[200],
+      ),
+      margin: const EdgeInsets.fromLTRB(0,0,20,4),
+      alignment: Alignment.center,
+      width: 18.0,
+      height: 18.0,
+      child: Center(
+        child: Text(
+          '${events.length}',
+          style: TextStyle().copyWith(
+            color: Colors.white,
+            fontSize: 12.0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtons() {
+    return Column(
+      children: <Widget>[
+        Row(
+          mainAxisSize: MainAxisSize.max,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: <Widget>[
+            CupertinoButton(
+              child: Text('Today'),
+              onPressed: () {
+                _calendarController.setSelectedDay(DateTime.now(), runCallback: true);
+              },
+            ),
+            CupertinoButton(
+              child: Text('Week'),
+              onPressed: () {
+                setState(() {
+                  _calendarController.setCalendarFormat(CalendarFormat.week);
+                });
+              },
+            ),
+            CupertinoButton(
+              child: Text('Month'),
+              onPressed: () {
+                setState(() {
+                  _calendarController.setCalendarFormat(CalendarFormat.month);
+                });
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventList() {
+    return Material(
+      child: ListView(
+      children: _selectedEvents
+        .map((event) => Container(
+              decoration: BoxDecoration(
+                border: Border.all(width: 0.8),
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+              child: ListTile(
+                title: Text(event.toString()),
+                // onTap: () => print('$event tapped!'),
+              ),
+            ))
+        .toList(),
       ),
     );
   }
@@ -91,235 +366,5 @@ class Jobs extends StatelessWidget {
         );
       }).toList(),
     );
-  }
-}
-
-class JobDetails extends StatefulWidget {
-  final Job job;
-  const JobDetails(this.job);
-
-  @override
-  _JobDetailsState createState() => _JobDetailsState();
-}
-
-class _JobDetailsState extends State<JobDetails> {
-  final db = DatabaseService();
-
-  @override
-  Widget build(BuildContext context) {
-    // var user = Provider.of<FirebaseUser>(context);
-    bool status = widget.job.done;
-    return CupertinoPageScaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: CupertinoColors.extraLightBackgroundGray,
-      navigationBar: CupertinoNavigationBar(
-        middle: Text('${widget.job.title}'),
-        trailing: CupertinoButton(
-          child: Text('Edit', style: TextStyle(fontSize: 12)),
-          onPressed: () => _editJob(context)
-        ),
-      ),
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        margin: EdgeInsets.all(20.0),
-        child: Container(
-          child: Padding(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                ListTile(
-                  leading: Icon(Icons.info_outline),
-                  title: Text('${widget.job.description}', style: TextStyle(fontSize: 16)),
-                ),
-                Divider(),
-                ListTile(
-                  title: Text('Completion Status', style: TextStyle(fontSize: 24)),
-                  trailing: CupertinoSwitch(
-                    value: status,
-                    onChanged: (bool value) {
-                      db.updateDone(widget.job.id, value);
-                      setState(() { status = value; });
-                    },
-                  ),
-                ),
-                Divider(),
-                ListTile(
-                  title: Text('Parts List', style: TextStyle(fontSize: 24)),
-                ),
-                ListView(
-                  padding: EdgeInsets.only(left: 20, right: 20),
-                  shrinkWrap: true,
-                  children: <Widget>[
-                    ListTile(
-                      dense: true,
-                      leading: Image(image: AssetImage('assets/generator.jpg'), height: 20,),
-                      title: Text('Generator: Generac 16kw #123456789'),
-                      trailing: Text('Qty: 1'),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.filter_drama, color: Colors.grey),
-                      title: Text('Air Filter: #123456789'),
-                      trailing: Text('Qty: 1'),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.battery_charging_full, color: Colors.red),
-                      title: Text('Battery: #123456789'),
-                      trailing: Text('Qty: 1'),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.format_color_fill, color: Colors.black),
-                      title: Text('Oil filter: #123456789'),
-                      trailing: Text('Qty: 1')
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.flash_on, color: Colors.grey),
-                      title: Text('Spark Plugs: #123456789'),
-                      trailing: Text('Qty: 2'),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.swap_vertical_circle, color: Colors.red),
-                      title: Text('Transfer Switch: #123456789'),
-                      trailing: Text('Qty: 1'),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.swap_calls, color: Colors.grey),
-                      title: Text('Conduit: #123456789'),
-                      trailing: Text('Length: 4\''),
-                    ),
-                    Divider(),
-                    ListTile(
-                      dense: true,
-                      leading: Icon(Icons.swap_calls, color: Colors.grey),
-                      title: Text('Wire: #123456789'),
-                      trailing: Text('Length: 4\''),
-                    ),
-                    Divider(),
-                    SizedBox(height: 60),
-                    Flex(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      direction: Axis.horizontal,
-                      children: [
-                        CupertinoButton(
-                          color: Colors.green,
-                          disabledColor: Colors.grey,
-                          child: Text('Start Job', 
-                            style: TextStyle(color: Colors.white)
-                          ),
-                          onPressed: () => _startJob(context),
-                        ),
-                        CupertinoButton(
-                          color: Colors.red,
-                          disabledColor: Colors.grey,
-                          child: Text('Stop Job', 
-                            style: TextStyle(color: Colors.white)
-                          ),
-                          onPressed: () => _endJob(context),
-                        )
-                      ],
-                    ),
-                  ]
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<bool> _editJob(BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('Edit Customer?'),
-        content: Text('Are you sure you really want to update this customer?' 
-          + ' This will affect all instances of this customer on all devices immediately.'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Yes'),
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Discard');
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
-    return Future.value(false);
-  }
-
-  Future<bool> _startJob(BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('Start Job'),
-        content: Text('This will set the start time for this job.'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Confirm'),
-            isDestructiveAction: true,
-            onPressed: () {
-              db.startJob(widget.job.id);
-              Navigator.pop(context, 'Discard');
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
-    return Future.value(false);
-  }
-
-  Future<bool> _endJob(BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('End Job'),
-        content: Text('This will set the completion time for this job.'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Confirm'),
-            isDestructiveAction: true,
-            onPressed: () {
-              db.updateDone(widget.job.id, true);
-              Navigator.pop(context, 'Discard');
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
-    return Future.value(false);
   }
 }
