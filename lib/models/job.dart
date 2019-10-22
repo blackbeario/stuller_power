@@ -12,8 +12,9 @@ class Job {
   final DateTime ended;
   final String techID;
   final String title;
+  final List<String> notes;
 
-  Job({ this.id, this.category, this.customer, this.created, this.scheduled, this.description, this.done, this.started, this.ended, this.techID, this.title });
+  Job({ this.id, this.category, this.customer, this.created, this.scheduled, this.description, this.done, this.started, this.ended, this.techID, this.title, this.notes });
 
   factory Job.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -22,14 +23,15 @@ class Job {
       id: doc.documentID,
       category: data['category'] ?? '',
       customer: data['customer'] ?? '',
-      created: DateTime.fromMillisecondsSinceEpoch(data['created'] ?? ''),
-      scheduled: DateTime.fromMillisecondsSinceEpoch(data['created'] ?? ''),
+      created: data['created'] != null ? DateTime.fromMillisecondsSinceEpoch(data['created']) : null,
+      scheduled: data['scheduled'] != null ? DateTime.fromMillisecondsSinceEpoch(data['scheduled']) : null,
       description: data['description'] ?? '',
       done: data['done'] ?? true,
       started: data['started'] != null ? DateTime.fromMillisecondsSinceEpoch(data['started']) : null,
       ended: data['ended'] != null ? DateTime.fromMillisecondsSinceEpoch(data['ended']) : null,
       techID: data['techID'] ?? '',
       title: data['title'] ?? '',
+      notes: List.from(data['notes']) ?? null
     );
   }
 
@@ -44,6 +46,7 @@ class Job {
       'ended' : ended?.millisecondsSinceEpoch,
       'title' : title,
       'description' : description,
-      'techID' : techID
+      'techID' : techID,
+      'notes' : notes
     };
 }
