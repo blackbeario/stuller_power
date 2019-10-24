@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:rxdart/rxdart.dart';
 import './services/db_service.dart';
 import 'package:flutter/cupertino.dart';
-// import 'package:stullerPower/models/user.dart';
 import 'package:table_calendar/table_calendar.dart';
 import './models/job.dart';
 import './job_details.dart';
@@ -16,7 +14,7 @@ class Calendar extends StatefulWidget {
 }
 
 class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
-  Map<DateTime, List> _jobs;
+  Map<DateTime, List<Job>> _jobs = {};
   List _selectedJobs;
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
@@ -27,15 +25,6 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    print('CALLBACK: _onDaySelected ' + _selectedDay.toString());
-
-
-    _jobs = {};
-      // _selectedDay: ['Event A7', 'Event B7', 'Event C7', 'Event D7', 'Event E7', 'Event F7'],
-      // _selectedDay.add(Duration(days: 1)): ['Event A8', 'Event B8', 'Event C8', 'Event D8'],
-    // };
-
-    _selectedJobs = _jobs[_selectedDay] ?? [];
     _calendarController = CalendarController();
     _animationController = AnimationController(
       vsync: this,
@@ -52,8 +41,8 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  // This isn't run until a day is tapped on the calendar.
   void _onDaySelected(DateTime day, List events) {
-    print('CALLBACK: _onDaySelected ' + day.toString());
     setState(() {
       _selectedDay = day;
       _selectedJobs = events;
@@ -61,13 +50,27 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   }
 
   void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
-    print('CALLBACK: _onVisibleDaysChanged');
+    // print('CALLBACK: _onVisibleDaysChanged');
   }
 
-  Widget _buildTableCalendarWithBuilders() {
+  @override
+  Widget build(BuildContext context) {
     var jobs = Provider.of<List<Job>>(context);
-    final _selectedDay = DateTime.now();
+    _jobs?.clear();
 
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: <Widget>[
+        _buildTableCalendarWithBuilders(jobs),
+        const SizedBox(height: 8.0),
+        _buildButtons(),
+        const SizedBox(height: 8.0),
+        Expanded(child: _buildJobsList()),
+      ],
+    );
+  }
+
+  Widget _buildTableCalendarWithBuilders(jobs) {
     if (jobs == null) {
       return Center(
         child: CupertinoActivityIndicator(
@@ -76,19 +79,23 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
       );
     }
 
-    
-    _jobs = {
-      // _selectedDay is always today = DateTime.now()
-      // so we don't want to make every job shown for today.
-      // Need to create a new object(?) and 
-      _selectedDay: jobs.map((job) {
-          return job;
-        }).toList(),
-      _selectedDay.add(Duration(days: 1)): ['Event A8', 'Event B8', 'Event C8', 'Event D8'],
-    };
-
     setState(() {
-      _selectedJobs = _jobs[_selectedDay] ?? [];
+      jobs.forEach((job) =>
+        _jobs[job.scheduled] = [job]
+      );
+
+      // _jobs = {
+      //   // DateTimeA : [EventA1, EventA2, ...],
+      //   // This is saying map all jobs to today. We don't want that Captain Obvious.
+      //   _selectedDay: jobs.map((job) {return job;}).toList(),
+      //   // _selectedDay: 
+      // };
+      // If we set _selectedJobs here, it works on page load. The problem is
+      // _buildTableCalendarWithBuilders() gets re-run on _onDaySelected() and overwrites
+      // _selectedJobs. So add an "if" statement to only write on initial load.
+      // if (_selectedJobs == null) {
+      //   _selectedJobs = _jobs[_selectedDay] ?? [];
+      // }
     });
 
     return Material(
@@ -116,12 +123,6 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
         headerStyle: HeaderStyle(
           centerHeaderTitle: true,
           formatButtonVisible: false,
-          // formatButtonTextStyle: TextStyle(color: Colors.white, fontSize: 14),
-          // formatButtonDecoration: BoxDecoration(
-          //   borderRadius: BorderRadius.all(Radius.circular(12.0)),
-          //   color: Colors.deepOrange[300],
-          // ),
-          // formatButtonShowsNext: false
         ),
         builders: CalendarBuilders(
           dayBuilder: (context, date, _) {
@@ -187,6 +188,7 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
           },
         ),
         onDaySelected: (date, events) {
+          // print('Selected: ' + date.toString() + ', ' + events.toString());
           _onDaySelected(date, events);
           _animationController.forward(from: 0.0);
         },
@@ -258,13 +260,12 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   Widget _buildJobsList() {
     var user = Provider.of<FirebaseUser>(context);
 
-    if (_selectedJobs == null) {          
-      return Center(
-        child: CupertinoActivityIndicator(
-          animating: true,
-        )
-      );
+    if (_selectedJobs == null || _selectedJobs.length == 0) {
+      return Container(
+        child: Text('No jobs scheduled for this day, yet.'),
+        );
     }
+
     return ListView(
       shrinkWrap: true,
       children: _selectedJobs.map((job) {
@@ -331,22 +332,5 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
           )
         )
       );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // List<Widget> jobs = [];
-    // var user = Provider.of<FirebaseUser>(context);
-    
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: <Widget>[
-        _buildTableCalendarWithBuilders(),
-        const SizedBox(height: 8.0),
-        _buildButtons(),
-        const SizedBox(height: 8.0),
-        Expanded(child: _buildJobsList()),
-      ],
-    );
   }
 }
