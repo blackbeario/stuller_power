@@ -98,6 +98,7 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
           var toAdd = [];
           _jobsPrelist.forEach((key, value) {
             if (key.toString().contains(ymd)) {
+              // TODO: This still needs work.
               value.forEach((v) {
                 if (v.id != (jobID)) {
                   print('Adding ' + jobID + ' to ' + ymd);
@@ -110,16 +111,18 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
             }
           });
         }
+        if (_selectedJobs == null) {
+          var now = DateTime.now();
+          var today = now.year.toString() + '-' + now.month.toString() + '-' + now.day.toString();
+          _jobsPrelist.forEach((key, value) {
+            if (key.toString().contains(today)) {
+              _selectedJobs = value;
+            }
+          });
+        }
       });
       
       _jobs.addAll(_jobsPrelist);
-
-      // If we set _selectedJobs here, it works on page load. The problem is
-      // _buildTableCalendarWithBuilders() gets re-run on _onDaySelected() and overwrites
-      // _selectedJobs. So add an "if" statement to only write on initial load.
-      if (_selectedJobs == null) {
-        _selectedJobs = _jobs[_selectedDay] ?? [];
-      }
     });
 
     return Material(
