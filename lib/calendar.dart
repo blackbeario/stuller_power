@@ -15,6 +15,7 @@ class Calendar extends StatefulWidget {
 
 class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   Map<DateTime, List<Job>> _jobs = {};
+  Map<DateTime, List<Job>> _jobsPrelist = {};
   List _selectedJobs;
   final auth = FirebaseAuth.instance;
   final db = DatabaseService();
@@ -25,12 +26,12 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    _jobs[_selectedDay] = []; // Initializes a key in _jobs.
     _calendarController = CalendarController();
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-
     _animationController.forward();
   }
 
@@ -56,7 +57,9 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     var jobs = Provider.of<List<Job>>(context);
+
     _jobs?.clear();
+    _jobsPrelist?.clear();
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
@@ -80,22 +83,37 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
     }
 
     setState(() {
-      jobs.forEach((job) =>
-        _jobs[job.scheduled] = [job]
-      );
+      // Ideally, we'd have an aggregated db query that combines jobs by date.
+      // But for now we're checking the values of the jobs stream and grouping here.
+      
+      // Set one key in _jobsPrelist so we can iterate through the map.
+      _jobsPrelist[_selectedDay] = [];
+      jobs.forEach((job) {
+        var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
+        var dateExists = _jobsPrelist.keys.toString().contains(ymd);
+        var jobID = job.id;
+        if (!dateExists) {
+          _jobsPrelist[job.scheduled] = [job];
+        }
+        // If the date already exists, loop through the _jobsPrelist keys
+        else {
+          _jobsPrelist.forEach((key, value) {
+            if (key.toString().contains(ymd) && !value.contains(jobID)) {
+              print(ymd + ' date already exists. Adding: ' + jobID);
+              value.add(job);
+            }
+          });
+        }
+      });
+      
+      _jobs = _jobsPrelist;
 
-      // _jobs = {
-      //   // DateTimeA : [EventA1, EventA2, ...],
-      //   // This is saying map all jobs to today. We don't want that Captain Obvious.
-      //   _selectedDay: jobs.map((job) {return job;}).toList(),
-      //   // _selectedDay: 
-      // };
       // If we set _selectedJobs here, it works on page load. The problem is
       // _buildTableCalendarWithBuilders() gets re-run on _onDaySelected() and overwrites
       // _selectedJobs. So add an "if" statement to only write on initial load.
-      // if (_selectedJobs == null) {
-      //   _selectedJobs = _jobs[_selectedDay] ?? [];
-      // }
+      if (_selectedJobs == null) {
+        _selectedJobs = _jobs[_selectedDay] ?? [];
+      }
     });
 
     return Material(
