@@ -26,7 +26,6 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _jobs[_selectedDay] = []; // Initializes a key in _jobs.
     _calendarController = CalendarController();
     _animationController = AnimationController(
       vsync: this,
@@ -87,7 +86,6 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
       // But for now we're checking the values of the jobs stream and grouping here.
       
       // Set one key in _jobsPrelist so we can iterate through the map.
-      _jobsPrelist[_selectedDay] = [];
       jobs.forEach((job) {
         var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
         var dateExists = _jobsPrelist.keys.toString().contains(ymd);
@@ -97,16 +95,24 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
         }
         // If the date already exists, loop through the _jobsPrelist keys
         else {
+          var toAdd = [];
           _jobsPrelist.forEach((key, value) {
-            if (key.toString().contains(ymd) && !value.contains(jobID)) {
-              print(ymd + ' date already exists. Adding: ' + jobID);
-              value.add(job);
+            if (key.toString().contains(ymd)) {
+              value.forEach((v) {
+                if (v.id != (jobID)) {
+                  print('Adding ' + jobID + ' to ' + ymd);
+                  toAdd.add(job);
+                }
+              });
+              if (toAdd.isNotEmpty) {
+                value.add(toAdd[0]);
+              }
             }
           });
         }
       });
       
-      _jobs = _jobsPrelist;
+      _jobs.addAll(_jobsPrelist);
 
       // If we set _selectedJobs here, it works on page load. The problem is
       // _buildTableCalendarWithBuilders() gets re-run on _onDaySelected() and overwrites
@@ -206,7 +212,6 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
           },
         ),
         onDaySelected: (date, events) {
-          // print('Selected: ' + date.toString() + ', ' + events.toString());
           _onDaySelected(date, events);
           _animationController.forward(from: 0.0);
         },
