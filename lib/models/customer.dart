@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import './job.dart';
 
 class Customer {
   final String id;
@@ -8,8 +9,9 @@ class Customer {
   final String main;
   final String mobile;
   final String notes;
+  final List<String> jobs;
 
-  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes });
+  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes, this.jobs });
 
   factory Customer.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -21,9 +23,21 @@ class Customer {
       email: data['email'] ?? '',
       main: data['main'] ?? '',
       mobile: data['mobile'] ?? '',
-      notes: data['notes'] ?? ''
+      notes: data['notes'] ?? '',
+      jobs: data['jobs'] != null ? List.from(data['jobs']) : null
     );
   }
+
+  Map<String, dynamic> toJson() =>
+    {
+      'firstName' : firstName,
+      'lastName' : lastName,
+      'email' : email,
+      'main' : main,
+      'mobile' : mobile,
+      'notes' : notes,
+      'jobs' : jobs
+    };
 }
 
 

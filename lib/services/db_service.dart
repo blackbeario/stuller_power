@@ -37,7 +37,7 @@ class DatabaseService {
   /// Or, redesign customer data to include locations and generators on main customerID
   /// document instead of subcollections. Dammit.
   Stream<List<Customer>> streamCustomers() {
-    var ref = _db.collection('customers').limit(50);
+    var ref = _db.collection('customers').limit(10);
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
@@ -80,6 +80,11 @@ class DatabaseService {
     var ref = _db.collection('jobs').where('techID', isEqualTo: user.uid).orderBy('scheduled');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  }
+
+  Future<Job> getJob(String id) async {
+    var snap = await _db.collection('jobs').document(id).get();
+    return Job.fromFirestore(snap);
   }
 
   Stream<User> streamUser(String id) {

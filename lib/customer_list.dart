@@ -1,14 +1,15 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import './models/customer.dart';
+import './models/job.dart';
 import './services/db_service.dart';
 import './locations_list.dart';
 import './customer_map.dart';
 import './customer_form.dart';
+import './job_details.dart';
 // import 'package:mobile/ui/elements/cupertino_area_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -58,9 +59,9 @@ class _CustomersState extends State<Customers> {
           flex: 3,
         ),
         Flexible(
-            flex: 2,
-            child: CustomerList(
-                customers: customers, mapController: _mapController))
+          flex: 2,
+          child: CustomerList(customers: customers, mapController: _mapController)
+        )
       ]),
     );
   }
@@ -334,6 +335,46 @@ class CustomerDetails extends StatelessWidget {
   final db = DatabaseService();
   Customer customer;
 
+  Widget _getJobs(List<String> jobs){
+    return Column(
+      children: jobs.map((job) {
+        return FutureBuilder<Job>(
+        future: db.getJob(job),
+        builder: (context, snapshot) {
+          var $job = snapshot.data;
+          
+          if ($job == null) {
+            return CupertinoActivityIndicator(
+              animating: true,
+            );
+          }
+          if (snapshot.hasError) {
+            return Text('Error fetching jobs');
+          }
+          var status = $job.done;
+          var jobDate = $job.scheduled.year.toString() + '-' + $job.scheduled.month.toString() + '-' + $job.scheduled.day.toString();
+          return GestureDetector(
+            child: Material(
+              child: ListTile(
+                contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
+                leading: status ? Icon(Icons.check_circle_outline, color: Colors.green[300]) : Icon(Icons.timer, color: Colors.orangeAccent[300]),
+                title: Text($job.title),
+                subtitle: Text(jobDate),
+                trailing: Icon(Icons.arrow_forward_ios),
+              ),
+            ),
+            onTap: () {
+              Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) {
+                return JobDetails($job);
+              }));
+            },
+          );
+        });
+      }).toList()
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var customer = Provider.of<Customer>(context);
@@ -374,18 +415,18 @@ class CustomerDetails extends StatelessWidget {
                         ),
                         // Notes
                         ListTile(
-                          leading: Icon(Icons.note_add, color: Colors.orangeAccent),
+                          leading: Icon(Icons.edit, color: Colors.grey),
                           title: Text(customer.notes),
                         ),
                         // Main phone
                         customer.main != '' ?
-                        ListTile(
-                          leading: Icon(Icons.phone, color: Colors.green),
-                          title: Text(customer.main),
-                          onTap: () {
-                            _callCustomer(customer, context);
-                          },
-                        ) : Container(),
+                          ListTile(
+                            leading: Icon(Icons.phone, color: Colors.green),
+                            title: Text(customer.main),
+                            onTap: () {
+                              _callCustomer(customer, context);
+                            },
+                          ) : Container(),
                         // Cell phone
                         customer.mobile != '' ? 
                           ListTile(
@@ -395,12 +436,38 @@ class CustomerDetails extends StatelessWidget {
                               _callCustomer(customer, context);
                             },
                           ) : Container(),
-                        // Locations
-                        StreamProvider<List<CustomerLocation>>.value(
-                          stream: db.streamlocations(customer.id),
-                          child: Locations(customer: customer),
-                        )
                       ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.all(10),
+              child: StreamProvider<List<CustomerLocation>>.value(
+                  stream: db.streamlocations(customer.id),
+                  child: Locations(customer: customer),
+                ),
+            ),
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.all(10),
+              child: ExpansionTile(
+                leading: Icon(Icons.timer),
+                initiallyExpanded: true,
+                title: Text('Job History'),
+                trailing: Container(height: 0.0, width: 0.0),
+                children: <Widget>[
+                  customer.jobs != null ? _getJobs(customer.jobs) : 
+                  ListTile(
+                    title: Text(
+                      'No job history for this customer. See customer notes above for recorded details.',
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ],
