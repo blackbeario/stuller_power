@@ -10,7 +10,7 @@ import 'package:flutter/cupertino.dart';
 import './calendar.dart';
 
 class JobList extends StatelessWidget {
-  final auth = FirebaseAuth.instance;
+  // final auth = FirebaseAuth.instance;
   final db = DatabaseService();
 
   @override
@@ -39,10 +39,10 @@ class JobList extends StatelessWidget {
             middle: Text('Schedule'),
           ),
           child: Container(
-            child: StreamProvider<List<Job>>.value(
+            child: StreamProvider<List<Job>>(
               // Gets a stream of jobs assigned to the logged-in user.
               // If user has admin role, get all jobs.
-              stream: $user.role != 'admin' ? db.streamJobsByUser(user) : db.streamJobs(),
+              builder: (context) => $user.role != 'admin' ? db.streamJobsByUser(user) : db.streamJobs(),
               // child: _buildCalendar()
               child: Calendar(),
             ),

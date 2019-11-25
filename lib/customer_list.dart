@@ -50,19 +50,21 @@ class _CustomersState extends State<Customers> {
       navigationBar: CupertinoNavigationBar(
         middle: Text('Customers'),
       ),
-      child:
-          Column(mainAxisAlignment: MainAxisAlignment.start, children: <Widget>[
-        Flexible(
-          child: CustomerMap(
-              initialPosition: const LatLng(35.31873, -82.46095),
-              mapController: _mapController),
-          flex: 3,
-        ),
-        Flexible(
-          flex: 2,
-          child: CustomerList(customers: customers, mapController: _mapController)
-        )
-      ]),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start, 
+        children: <Widget>[
+          Flexible(
+            child: CustomerMap(
+                initialPosition: const LatLng(35.31873, -82.46095),
+                mapController: _mapController),
+            flex: 3,
+          ),
+          Flexible(
+            flex: 2,
+            child: CustomerList(customers: customers, mapController: _mapController)
+          )
+        ]
+      ),
     );
   }
 }
@@ -133,27 +135,28 @@ class _CustomerListState extends State<CustomerList> {
         children: <Widget>[
           Expanded(
             child: ListView.separated(
-                itemCount: filteredCustomers.length,
-                shrinkWrap: true,
-                separatorBuilder: (context, index) {
-                  return Divider(height: 0);
-                },
-                itemBuilder: (context, index) {
-                  if (index < filteredCustomers.length) {
-                    return CustomerTile(
-                      callback: callback,
-                      changed: _changed,
-                      customers: widget.customers,
-                      db: db,
-                      filtered: filteredCustomers,
-                      index: index,
-                      lastItem: index == filteredCustomers.length - 1,
-                      customer: filteredCustomers[index],
-                      mapController: widget.mapController,
-                    );
-                  }
-                  return Text('loading...');
-                }),
+              itemCount: filteredCustomers.length,
+              shrinkWrap: true,
+              separatorBuilder: (context, index) {
+                return Divider(height: 0);
+              },
+              itemBuilder: (context, index) {
+                if (index < filteredCustomers.length) {
+                  return CustomerTile(
+                    callback: callback,
+                    changed: _changed,
+                    customers: widget.customers,
+                    db: db,
+                    filtered: filteredCustomers,
+                    index: index,
+                    lastItem: index == filteredCustomers.length - 1,
+                    customer: filteredCustomers[index],
+                    mapController: widget.mapController,
+                  );
+                }
+                return Text('loading...');
+              }
+            ),
           ),
 
           // Search Bar
@@ -161,47 +164,49 @@ class _CustomerListState extends State<CustomerList> {
               ? new Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                      Expanded(
-                        flex: 11,
-                        child: CupertinoTextField(
-                          padding: EdgeInsets.all(10.0),
-                          expands: true,
-                          autofocus: true,
-                          minLines: null,
-                          maxLines: null,
-                          placeholder: " search",
-                          onChanged: (string) {
-                            setState(() {
-                              filteredCustomers = widget.customers
-                                  .where((customer) => (customer.firstName
-                                          .toLowerCase()
-                                          .contains(string.toLowerCase()) ||
-                                      customer.lastName
-                                          .toLowerCase()
-                                          .contains(string.toLowerCase()) ||
-                                      customer.email
-                                          .toLowerCase()
-                                          .contains(string.toLowerCase())))
-                                  .toList();
-                            });
-                          },
-                        ),
+                    Expanded(
+                      flex: 11,
+                      child: CupertinoTextField(
+                        padding: EdgeInsets.all(10.0),
+                        expands: true,
+                        autofocus: true,
+                        minLines: null,
+                        maxLines: null,
+                        placeholder: " search",
+                        onChanged: (string) {
+                          setState(() {
+                            filteredCustomers = widget.customers
+                              .where((customer) => (
+                                customer.firstName
+                                  .toLowerCase()
+                                  .contains(string.toLowerCase()) ||
+                                customer.lastName
+                                  .toLowerCase()
+                                  .contains(string.toLowerCase()) ||
+                                customer.email
+                                  .toLowerCase()
+                                  .contains(string.toLowerCase())
+                                )
+                              ).toList();
+                          });
+                        },
                       ),
-                      Expanded(
-                        flex: 1,
-                        child: new CupertinoButton(
-                          padding: EdgeInsets.only(right: 10.0),
-                          child: Icon(
-                            CupertinoIcons.clear,
-                            size: 44,
-                          ),
-                          onPressed: () {
-                            _changed(false, "search");
-                            filteredCustomers = widget.customers;
-                          },
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: new CupertinoButton(
+                        padding: EdgeInsets.only(right: 10.0),
+                        child: Icon(
+                          CupertinoIcons.clear,
+                          size: 44,
                         ),
-                      )
-                    ])
+                        onPressed: () {
+                          _changed(false, "search");
+                          filteredCustomers = widget.customers;
+                        },
+                      ),
+                    )
+                  ])
               : Row(
                   children: <Widget>[
                     Expanded(
@@ -262,8 +267,8 @@ class CustomerTile extends StatelessWidget {
                 onDoubleTap: () async {
                   await Navigator.of(context).push(
                     CupertinoPageRoute(builder: (context) {
-                      return StreamProvider<Customer>.value(
-                        stream: db.streamCustomer(customer.id),
+                      return StreamProvider<Customer>(
+                        builder: (context) => db.streamCustomer(customer.id),
                         child: CustomerDetails(customer.id),
                       );
                     }),
@@ -286,8 +291,8 @@ class CustomerTile extends StatelessWidget {
                 onDoubleTap: () async {
                   await Navigator.of(context).push(
                     CupertinoPageRoute(builder: (context) {
-                      return StreamProvider<Customer>.value(
-                        stream: db.streamCustomer(customer.id),
+                      return StreamProvider<Customer>(
+                        builder: (context) => db.streamCustomer(customer.id),
                         child: CustomerDetails(customer.id),
                       );
                     }),
@@ -447,8 +452,8 @@ class CustomerDetails extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
               margin: EdgeInsets.all(10),
-              child: StreamProvider<List<CustomerLocation>>.value(
-                  stream: db.streamlocations(customer.id),
+              child: StreamProvider<List<CustomerLocation>>(
+                  builder: (context) => db.streamlocations(customer.id),
                   child: Locations(customer: customer),
                 ),
             ),

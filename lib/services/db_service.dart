@@ -120,6 +120,19 @@ class DatabaseService {
     });
   }
 
+    Future<void> updateJob(
+    String id, String category, String customer, String description, 
+    String techID, String title, // Map notes
+  ) async {
+    var $now = DateTime.now();
+    var updated = $now.millisecondsSinceEpoch;
+    return await _db.collection('jobs').document(id).updateData({
+      'updated': updated, 'category': category ?? '', 'customer': customer ?? '', 
+      'description': description  ?? '', 'techID': techID ?? '', 'title': title  ?? '', 
+      // 'notes': notes
+    });
+  }
+
   Future<void> addLocation(FirebaseUser user, dynamic location) {
     return _db
       .collection('customers')

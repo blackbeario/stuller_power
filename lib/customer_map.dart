@@ -165,8 +165,8 @@ class _CustomerMapState extends State<CustomerMap> {
             onTap: () async {
               await Navigator.of(context).push(
                 CupertinoPageRoute(builder: (context) {
-                  return StreamProvider<Customer>.value(
-                    stream: db.streamCustomer(customer.id),
+                  return StreamProvider<Customer>(
+                    builder: (context) => db.streamCustomer(customer.id),
                     child: CustomerDetails(customer.id),
                   );
                 }),

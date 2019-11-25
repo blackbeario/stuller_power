@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import './models/job.dart';
 import './services/db_service.dart';
 import 'package:flutter/cupertino.dart';
+import './job_form.dart';
 
 class JobDetails extends StatefulWidget {
   final Job job;
@@ -35,7 +36,7 @@ class _JobDetailsState extends State<JobDetails> {
         middle: Text('${widget.job.title}'),
         trailing: CupertinoButton(
           child: Text('Edit', style: TextStyle(fontSize: 12)),
-          onPressed: () => _editJob(context)
+          onPressed: () => _editJob(widget.job, context)
         ),
       ),
       child: Card(
@@ -174,18 +175,23 @@ class _JobDetailsState extends State<JobDetails> {
     );
   }
 
-  Future<bool> _editJob(BuildContext context) {
+  Future<bool> _editJob(job, BuildContext context) {
     showCupertinoDialog(context: context, builder: (BuildContext context) {
       return CupertinoAlertDialog(
-        title: Text('Edit Customer?'),
-        content: Text('Are you sure you really want to update this customer?' 
-          + ' This will affect all instances of this customer on all devices immediately.'),
+        title: Text('Edit Job?'),
+        content: Text('Are you sure you really want to update this job?' 
+          + ' This will affect all instances of this job on all devices immediately.'),
         actions: <Widget>[
           CupertinoDialogAction(
             child: Text('Yes'),
             isDestructiveAction: true,
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context, 'Discard');
+              await Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) {
+                  return JobAddEdit(job);
+                }),
+              );
             }
           ),
           CupertinoDialogAction(

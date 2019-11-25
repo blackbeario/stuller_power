@@ -55,8 +55,8 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // WTF is this failing all of a sudden?
     var jobs = Provider.of<List<Job>>(context);
-
     _jobs?.clear();
     _jobsPrelist?.clear();
 
@@ -76,7 +76,7 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
     if (jobs == null) {
       return Center(
         child: CupertinoActivityIndicator(
-          animating: true,
+          animating: false,
         )
       );
     }
@@ -87,29 +87,32 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
       
       // Set one key in _jobsPrelist so we can iterate through the map.
       jobs.forEach((job) {
-        var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
-        var dateExists = _jobsPrelist.keys.toString().contains(ymd);
-        var jobID = job.id;
-        if (!dateExists) {
-          _jobsPrelist[job.scheduled] = [job];
-        }
+        // print(job.scheduled.toString());
+        if (job != null && job.scheduled != null) {
+          var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
+          var dateExists = _jobsPrelist.keys.toString().contains(ymd);
+          var jobID = job.id;
+          if (!dateExists) {
+            _jobsPrelist[job.scheduled] = [job];
+          }
         // If the date already exists, loop through the _jobsPrelist keys
-        else {
-          var toAdd = [];
-          _jobsPrelist.forEach((key, value) {
-            if (key.toString().contains(ymd)) {
-              // TODO: This still needs work.
-              value.forEach((v) {
-                if (v.id != (jobID)) {
-                  print('Adding ' + jobID + ' to ' + ymd);
-                  toAdd.add(job);
+          else {
+            var toAdd = [];
+            _jobsPrelist.forEach((key, value) {
+              if (key.toString().contains(ymd)) {
+                // TODO: This still needs work.
+                value.forEach((v) {
+                  if (v.id != (jobID)) {
+                    print('Adding ' + jobID + ' to ' + ymd);
+                    toAdd.add(job);
+                  }
+                });
+                if (toAdd.isNotEmpty) {
+                  value.add(toAdd[0]);
                 }
-              });
-              if (toAdd.isNotEmpty) {
-                value.add(toAdd[0]);
               }
-            }
-          });
+            });
+          }
         }
         if (_selectedJobs == null) {
           var now = DateTime.now();

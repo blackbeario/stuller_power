@@ -78,7 +78,7 @@ class LoginPageState extends State<LoginPage> {
                           // validator: (value) =>
                               // (value.isEmpty) ? "Please Enter Email" : null,
                           placeholder: "email",
-                          style: TextStyle(color: CupertinoColors.white),
+                          style: TextStyle(color: CupertinoColors.darkBackgroundGray),
                         ),
                       ),
                       Padding(
@@ -88,7 +88,7 @@ class LoginPageState extends State<LoginPage> {
                           controller: _password,
                           placeholder: "password",
                           obscureText: _hidePassword,
-                          style: TextStyle(color: CupertinoColors.white),
+                          style: TextStyle(color: CupertinoColors.darkBackgroundGray),
                           suffix: FlatButton(
                             onPressed: _toggle,
                             child: Icon(_hidePassword ? Icons.lock : Icons.lock_open, color: CupertinoColors.inactiveGray)

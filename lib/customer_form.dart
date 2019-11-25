@@ -187,8 +187,9 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
               // Add some space between sections
               SizedBox(height: 40),
 
-              StreamProvider<List<CustomerLocation>>.value(
-                stream: db.streamlocations(widget.customer.id),
+              StreamProvider<List<CustomerLocation>>(
+                builder: (context) => db.streamlocations(widget.customer.id),
+                initialData: <CustomerLocation>[],
                 child: LocationWidget(customer: widget.customer, callback: callback),
               ),
             ]

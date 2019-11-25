@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import './job.dart';
 
 class Customer {
   final String id;
