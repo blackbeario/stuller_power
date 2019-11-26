@@ -38,6 +38,13 @@ class _JobAddEditState extends State<JobAddEdit>{
       _titleController.text = widget.job.title;
   }
 
+    // Resets customer list from child widget action.
+  void callback(setAssigned) {
+    setState(() {
+      _customerController.text = setAssigned;
+    });
+  }
+
   @override
   void dispose() {
     _categoryController.dispose();
@@ -97,18 +104,6 @@ class _JobAddEditState extends State<JobAddEdit>{
                   keyboardType: TextInputType.text
                 ),
 
-                // customer. This obviously needs to be a reference to the customer in Firestore.
-                TextField(
-                  style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                  decoration: InputDecoration(
-                    contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
-                    hintText: 'customer',
-                    labelText: 'customer',
-                  ),
-                  controller: _customerController,
-                  keyboardType: TextInputType.text
-                ),
-
                 // description
                 TextField(
                   style: TextStyle(fontSize: 18, color: Colors.grey[700]),
@@ -149,7 +144,11 @@ class _JobAddEditState extends State<JobAddEdit>{
                 ),
 
                 // Customer search field
-                CustomerSearchWidget(assigned: widget.job.customer.toString(), customers: customers),
+                CustomerSearchWidget(
+                  assigned: _customerController.text != null ? _customerController.text : widget.job.customer.toString(), 
+                  customers: customers,
+                  callback: callback
+                ),
             ]
           )
         ),
@@ -173,32 +172,34 @@ class CustomerSearchWidget extends StatefulWidget {
     Key key,
     this.assigned,
     this.customers,
+    this.callback
   }) : super(key: key);
 
-  // The original stream of customers.
   var assigned;
+  final Function callback;
+  // The original stream of customers.
   List<Customer> customers = List();
   @override
   State<StatefulWidget> createState() => _CustomerSearchWidgetState();
 }
 
 class _CustomerSearchWidgetState extends State<CustomerSearchWidget> {
-  List<Customer> filteredCustomers = List();
+  static List<Customer> filteredCustomers = List();
   bool _searchVisible = false;
-
-  void _changed(bool visibility, String field) {
-    setState(() {
-      if (field == "Customer search") {
-        _searchVisible = visibility;
-      }
-    });
-  }
 
   @override
   void initState() {
     super.initState();
     setState(() {
       filteredCustomers = widget.customers;
+    });
+  }
+
+  void _changed(bool visibility, String field) {
+    setState(() {
+      if (field == "Customer search") {
+        _searchVisible = visibility;
+      }
     });
   }
 
@@ -213,7 +214,7 @@ class _CustomerSearchWidgetState extends State<CustomerSearchWidget> {
       );
     }
     return Container(
-      height: 300,
+      height: _searchVisible ? 300 : 80,
       decoration: new BoxDecoration(color: Colors.white),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -302,13 +303,14 @@ class _CustomerSearchWidgetState extends State<CustomerSearchWidget> {
                       return Material(
                         child: InkWell(
                           onTap: () {
-                            setState(() {
+                            setState(() async {
                               widget.assigned = filteredCustomers[index].firstName + ' ' + filteredCustomers[index].lastName;
+                              await widget.callback(widget.assigned);
                               _changed(false, "Customer search");
                             });
                           },
                           child: ListTile(
-                            leading: Icon(Icons.error_outline, color: Colors.red),
+                            leading: Icon(Icons.person, color: Colors.red),
                             title: Text(filteredCustomers[index].firstName + ' ' + filteredCustomers[index].lastName),
                           ),
                         ),
