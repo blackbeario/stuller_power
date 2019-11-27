@@ -11,7 +11,7 @@ class JobDetails extends StatefulWidget {
   @override
   _JobDetailsState createState() => _JobDetailsState();
 }
-
+ 
 class _JobDetailsState extends State<JobDetails> {
   final db = DatabaseService();
 
@@ -58,14 +58,11 @@ class _JobDetailsState extends State<JobDetails> {
                   ),
                   Divider(),
                   _getNotes(widget.job.notes),
-                  // ListTile(
-                  //   leading: Icon(Icons.note),
-                  //   title: Text('${widget.job.notes}', style: TextStyle(fontSize: 16)),
-                  //   trailing: IconButton(
-                  //     icon:Icon(Icons.add),
-                  //     onPressed: () => _editJob(context),
-                  //   ),
-                  // ),
+                  Divider(),
+                  ListTile(
+                    leading: Icon(Icons.person),
+                    title: Text('${widget.job.customer}', style: TextStyle(fontSize: 16)),
+                  ),
                   Divider(),
                   ListTile(
                     title: Text('Completion Status', style: TextStyle(fontSize: 24)),

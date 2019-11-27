@@ -303,9 +303,9 @@ class _CustomerSearchWidgetState extends State<CustomerSearchWidget> {
                       return Material(
                         child: InkWell(
                           onTap: () {
-                            setState(() async {
+                            setState(() {
                               widget.assigned = filteredCustomers[index].firstName + ' ' + filteredCustomers[index].lastName;
-                              await widget.callback(widget.assigned);
+                              widget.callback(widget.assigned);
                               _changed(false, "Customer search");
                             });
                           },

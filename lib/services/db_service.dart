@@ -82,9 +82,9 @@ class DatabaseService {
       list.documents.map((doc) => Job.fromFirestore(doc)).toList());
   }
 
-  Future<Job> getJob(String id) async {
-    var snap = await _db.collection('jobs').document(id).get();
-    return Job.fromFirestore(snap);
+  Stream<Job> getJob(String id) {
+    return _db.collection('jobs').document(id).snapshots()
+    .map((snap) => Job.fromFirestore(snap));
   }
 
   Stream<User> streamUser(String id) {
@@ -92,7 +92,12 @@ class DatabaseService {
       .collection('users')
       .document(id)
       .snapshots()
-      .map((snap) => User.fromMap(snap.data));
+      .map((snap) => User.fromFirestore(snap.data));
+  }
+
+  Future<User> getUser(FirebaseUser user) async {
+    var snap = await _db.collection('users').document(user.uid).get();
+    return User.fromFirestore(snap);
   }
 
   Future<void> createCustomer(FirebaseUser user) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,11 +10,17 @@ import './job_details.dart';
 import 'package:intl/intl.dart';
 
 class Calendar extends StatefulWidget {
+  Calendar({
+    Key key,
+    this.jobs
+    }) : super(key: key);
+    final List<Job> jobs;
+
   @override
   _CalendarState createState() => _CalendarState();
 }
 
-class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
+class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin {
   Map<DateTime, List<Job>> _jobs = {};
   Map<DateTime, List<Job>> _jobsPrelist = {};
   List _selectedJobs;
@@ -21,6 +28,7 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
   final db = DatabaseService();
   AnimationController _animationController;
   CalendarController _calendarController;
+  // StreamController<Job> _streamController;
   var _selectedDay = DateTime.now();
 
   @override
@@ -32,12 +40,14 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 400),
     );
     _animationController.forward();
+    // _streamController = StreamController();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     _calendarController.dispose();
+    // _streamController.close();
     super.dispose();
   }
 
@@ -55,15 +65,13 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    // WTF is this failing all of a sudden?
-    var jobs = Provider.of<List<Job>>(context);
     _jobs?.clear();
     _jobsPrelist?.clear();
 
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       children: <Widget>[
-        _buildTableCalendarWithBuilders(jobs),
+        _buildTableCalendarWithBuilders(widget.jobs),
         const SizedBox(height: 8.0),
         _buildButtons(),
         const SizedBox(height: 8.0),
@@ -81,52 +89,55 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
       );
     }
 
-    setState(() {
-      // Ideally, we'd have an aggregated db query that combines jobs by date.
-      // But for now we're checking the values of the jobs stream and grouping here.
-      
-      // Set one key in _jobsPrelist so we can iterate through the map.
-      jobs.forEach((job) {
-        // print(job.scheduled.toString());
-        if (job != null && job.scheduled != null) {
-          var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
-          var dateExists = _jobsPrelist.keys.toString().contains(ymd);
-          var jobID = job.id;
-          if (!dateExists) {
-            _jobsPrelist[job.scheduled] = [job];
-          }
-        // If the date already exists, loop through the _jobsPrelist keys
-          else {
-            var toAdd = [];
-            _jobsPrelist.forEach((key, value) {
-              if (key.toString().contains(ymd)) {
-                // TODO: This still needs work.
-                value.forEach((v) {
-                  if (v.id != (jobID)) {
-                    print('Adding ' + jobID + ' to ' + ymd);
-                    toAdd.add(job);
-                  }
-                });
-                if (toAdd.isNotEmpty) {
-                  value.add(toAdd[0]);
-                }
-              }
-            });
-          }
+    // Ideally, we'd have an aggregated db query that combines jobs by date.
+    // But for now we're checking the values of the jobs stream and grouping here.
+    jobs.forEach((job) {
+      if (job != null && job.scheduled != null) {
+        // Sets a ymd variable for the year month date of each job.
+        var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
+        // Checks to see if the jobsPrelist array has the ymd.
+        var dateExists = _jobsPrelist.keys.toString().contains(ymd);
+        var jobID = job.id;
+        // If the ymd doesn't exist, add it to the array.
+        if (!dateExists) {
+          _jobsPrelist[job.scheduled] = [job];
         }
-        if (_selectedJobs == null) {
-          var now = DateTime.now();
-          var today = now.year.toString() + '-' + now.month.toString() + '-' + now.day.toString();
+        // If the date already exists, loop through the array keys
+        else {
+          // Create an empty "work" array to use since we can't modify the 
+          // _jobsPrelist array directly while looping through it.
+          var toAdd = [];
           _jobsPrelist.forEach((key, value) {
-            if (key.toString().contains(today)) {
-              _selectedJobs = value;
+            if (key.toString().contains(ymd)) {
+              value.forEach((val) {
+                // Adds the jobID to a temp array if it doesn't already exist in the value list.
+                if (val.id != (jobID)) {
+                  print('Adding ' + jobID + ' to ' + ymd);
+                  toAdd.add(job);
+                }
+              });
+              // Adds element of the array to the _jobsPrelist value.
+              if (toAdd.isNotEmpty) {
+                value.add(toAdd[0]);
+              }
             }
           });
         }
-      });
-      
-      _jobs.addAll(_jobsPrelist);
+      }
+      if (_selectedJobs == null) {
+        var now = DateTime.now();
+        var today = now.year.toString() + '-' + now.month.toString() + '-' + now.day.toString();
+        _jobsPrelist.forEach((key, value) {
+          if (key.toString().contains(today)) {
+            _selectedJobs = value;
+          }
+        });
+      }
     });
+    
+    // Finally, add our _jobsPrelist to our _jobs array that 
+    // gets assigned to the Calendar events parameter.
+    _jobs.addAll(_jobsPrelist);
 
     return Material(
       color: Colors.white,
@@ -288,11 +299,10 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
 
   Widget _buildJobsList() {
     var user = Provider.of<FirebaseUser>(context);
-
     if (_selectedJobs == null || _selectedJobs.length == 0) {
       return Container(
-        child: Text('No jobs scheduled for this day, yet.'),
-        );
+        child: Text('No jobs currently scheduled for this day.'),
+      );
     }
 
     return ListView(
@@ -324,9 +334,30 @@ class _CalendarState extends State<Calendar> with TickerProviderStateMixin {
                     subtitle: Text(job.description, style: doneColor),
                     trailing: status ? jobDone : jobPending,
                     onTap: () {
+                      // setState(() {
+                      //   var $j = db.getJob(job.id);
+                      //   _streamController.addStream($j);
+                      // });
                       Navigator.of(context).push(
                         CupertinoPageRoute(builder: (context) {
-                          return JobDetails(job);
+                          // This is a bit of a hack to get around the fact that the job returned 
+                          // by the calendar widget isn't dynamically updated, even though the Calendar 
+                          // gets it's data from a StreamProvider. So we're manually taking the job ID
+                          // and returning a single job stream so that the JobDetails screen is dynamically 
+                          // updated after a save.
+                          return StreamBuilder(
+                            stream: db.getJob(job.id),
+                            builder: (context, snapshot) {
+                              var $job = snapshot.data;
+                              if (!snapshot.hasData) {
+                                return SizedBox(
+                                  height: 100.0,
+                                  width: 100.0,
+                                  child: Center(child: CircularProgressIndicator()),
+                                );
+                              }
+                              return JobDetails($job);
+                            });
                         }),
                       );
                     }

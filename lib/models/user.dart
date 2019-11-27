@@ -7,7 +7,7 @@ class User {
 
   User({ this.firstName, this.lastName, this.role, this.phone });
 
-  factory User.fromMap(Map data) {
+  factory User.fromFirestore(data) {
     return User(
       firstName: data['firstName'] ?? '',
       lastName: data['lastName'] ?? '',

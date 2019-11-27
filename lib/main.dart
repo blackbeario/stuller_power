@@ -8,6 +8,8 @@ import 'package:stullerPower/job_list.dart';
 import 'package:stullerPower/profile.dart';
 import 'package:flutter/cupertino.dart';
 import './models/customer.dart';
+import './models/user.dart';
+import './models/job.dart';
 import './services/db_service.dart';
 
 void main() => runApp(MyApp());
@@ -36,7 +38,7 @@ class MyApp extends StatelessWidget {
 
 
 class AppHomePage extends StatelessWidget {
-  final AuthService auth = AuthService();
+  // final AuthService auth = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -44,46 +46,59 @@ class AppHomePage extends StatelessWidget {
     bool loggedIn = user != null;
     
     if (loggedIn) {
-      return CupertinoTabScaffold(
-        tabBar: CupertinoTabBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.clock),
-              title: Text('Schedule'),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.home),
-              title: Text('Customers'),
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.profile_circled),
-              title: Text('Profile'),
-            ),
-          ],
-        ),
-        resizeToAvoidBottomInset: false,
-        tabBuilder: (BuildContext context, int index) {
-          assert(index >= 0 && index <=2);
-          switch (index) {
-            case 0: 
-              return CupertinoTabView(
-                builder: (BuildContext context) => JobList(),
-              );
-              break;
-            case 1:
-              return CupertinoTabView(
-                builder: (BuildContext context) => Customers(),
-              );
-              break;
-            case 2:
-              return CupertinoTabView(
-                builder: (BuildContext context) => Profile(),
-              );
-              break;
-            }
-            return null;
-        },
-      );
+      return FutureBuilder<User>(
+        future: db.getUser(user),
+        builder: (context, snapshot) {
+          var $user = snapshot.data;
+          if ($user == null) {
+            return Center(
+              child: Text('Loading...',
+              style: CupertinoTheme.of(context).textTheme.navTitleTextStyle),
+            );
+          }
+          return CupertinoTabScaffold(
+          tabBar: CupertinoTabBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.clock),
+                title: Text('Schedule'),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.home),
+                title: Text('Customers'),
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(CupertinoIcons.profile_circled),
+                title: Text('Profile'),
+              ),
+            ],
+          ),
+          resizeToAvoidBottomInset: false,
+          tabBuilder: (BuildContext context, int index) {
+            assert(index >= 0 && index <=2);
+            switch (index) {
+              case 0: 
+              return StreamProvider<List<Job>>(
+                builder: (context) => $user.role != 'admin' ? db.streamJobsByUser(user) : db.streamJobs(),
+                child: CupertinoTabView(
+                  builder: (BuildContext context) => JobList(),
+                ));
+                break;
+              case 1:
+                return CupertinoTabView(
+                  builder: (BuildContext context) => Customers(),
+                );
+                break;
+              case 2:
+                return CupertinoTabView(
+                  builder: (BuildContext context) => Profile(),
+                );
+                break;
+              }
+              return null;
+          },
+        );
+      });
     }
     else return LoginPage();
   }

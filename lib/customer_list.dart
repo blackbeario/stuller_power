@@ -343,8 +343,8 @@ class CustomerDetails extends StatelessWidget {
   Widget _getJobs(List<String> jobs){
     return Column(
       children: jobs.map((job) {
-        return FutureBuilder<Job>(
-        future: db.getJob(job),
+        return StreamBuilder<Job>(
+        stream: db.getJob(job),
         builder: (context, snapshot) {
           var $job = snapshot.data;
           
