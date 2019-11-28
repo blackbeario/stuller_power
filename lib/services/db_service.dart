@@ -84,14 +84,11 @@ class DatabaseService {
 
   Stream<Job> getJob(String id) {
     return _db.collection('jobs').document(id).snapshots()
-    .map((snap) => Job.fromFirestore(snap));
+      .map((snap) => Job.fromFirestore(snap));
   }
 
   Stream<User> streamUser(String id) {
-    return _db
-      .collection('users')
-      .document(id)
-      .snapshots()
+    return _db.collection('users').document(id).snapshots()
       .map((snap) => User.fromFirestore(snap.data));
   }
 
@@ -127,14 +124,14 @@ class DatabaseService {
 
     Future<void> updateJob(
     String id, String category, String customer, String description, 
-    String techID, String title, // Map notes
+    String techID, String title, String notes
   ) async {
     var $now = DateTime.now();
     var updated = $now.millisecondsSinceEpoch;
     return await _db.collection('jobs').document(id).updateData({
       'updated': updated, 'category': category ?? '', 'customer': customer ?? '', 
       'description': description  ?? '', 'techID': techID ?? '', 'title': title  ?? '', 
-      // 'notes': notes
+      'notes': notes
     });
   }
 
@@ -165,10 +162,7 @@ class DatabaseService {
   }
 
   Future<void> removeJob(FirebaseUser user, String id) {
-    return _db
-      .collection('jobs')
-      .document(id)
-      .delete();
+    return _db.collection('jobs').document(id).delete();
   }
 
   Future<void> startJob(String id) async {

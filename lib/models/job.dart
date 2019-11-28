@@ -12,7 +12,7 @@ class Job {
   final DateTime ended;
   final String techID;
   final String title;
-  final List<String> notes;
+  final String notes;
 
   Job({ this.id, this.category, this.customer, this.created, this.scheduled, this.description, this.done, this.started, this.ended, this.techID, this.title, this.notes });
 
@@ -31,7 +31,7 @@ class Job {
       ended: data['ended'] != null ? DateTime.fromMillisecondsSinceEpoch(data['ended']) : null,
       techID: data['techID'] ?? '',
       title: data['title'] ?? '',
-      notes: List.from(data['notes']) ?? null
+      notes: data['notes'] ?? ''
     );
   }
 

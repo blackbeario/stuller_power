@@ -15,17 +15,6 @@ class JobDetails extends StatefulWidget {
 class _JobDetailsState extends State<JobDetails> {
   final db = DatabaseService();
 
-  Widget _getNotes(List<String> notes){
-    return Column(
-      children: notes.map((note) => 
-        ListTile(
-          leading: Icon(Icons.note_add),
-          title: Text(note)
-        ),
-      ).toList()
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     bool status = widget.job.done;
@@ -54,14 +43,17 @@ class _JobDetailsState extends State<JobDetails> {
                 children: <Widget>[
                   ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text('${widget.job.description}', style: TextStyle(fontSize: 16)),
+                    title: Text(widget.job.description, style: TextStyle(fontSize: 16)),
                   ),
                   Divider(),
-                  _getNotes(widget.job.notes),
+                  ListTile(
+                    leading: Icon(Icons.note_add),
+                    title: Text(widget.job.notes)
+                  ),
                   Divider(),
                   ListTile(
                     leading: Icon(Icons.person),
-                    title: Text('${widget.job.customer}', style: TextStyle(fontSize: 16)),
+                    title: Text(widget.job.customer, style: TextStyle(fontSize: 16)),
                   ),
                   Divider(),
                   ListTile(

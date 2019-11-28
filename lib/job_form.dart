@@ -33,7 +33,7 @@ class _JobAddEditState extends State<JobAddEdit>{
       _categoryController.text = widget.job.category;
       _customerController.text = widget.job.customer;
       _descriptionController.text = widget.job.description;
-      // _notesController.text = widget.job.notes;
+      _notesController.text = widget.job.notes;
       _techController.text = widget.job.techID;
       _titleController.text = widget.job.title;
   }
@@ -117,7 +117,7 @@ class _JobAddEditState extends State<JobAddEdit>{
                 ),
 
                 // Notes input
-                TextFormField(
+                TextField(
                   minLines: 2,
                   maxLines: 10,
                   style: TextStyle(fontSize: 16, color: Colors.grey[700]),
@@ -161,7 +161,7 @@ class _JobAddEditState extends State<JobAddEdit>{
     db.updateJob(
       widget.job.id, _categoryController.text, _customerController.text, 
       _descriptionController.text, _techController.text, _titleController.text,
-      // _notesController.text
+      _notesController.text
     );
     return Future.value(false);
   }
