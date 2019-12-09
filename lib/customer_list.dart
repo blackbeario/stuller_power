@@ -27,6 +27,7 @@ class _CustomersState extends State<Customers> {
   final auth = FirebaseAuth.instance;
   final Completer<GoogleMapController> _mapController = Completer();
   bool _searchVisible = false;
+  Customer customer;
 
   @override
   void initState() {
@@ -49,14 +50,23 @@ class _CustomersState extends State<Customers> {
       resizeToAvoidBottomInset: true,
       navigationBar: CupertinoNavigationBar(
         middle: Text('Customers'),
+        trailing: CupertinoButton(
+          child: Icon(Icons.add),
+          onPressed: () => 
+            Navigator.of(context).push(
+            CupertinoPageRoute(builder: (context) {
+              return CustomerAddEdit(customer);
+            }),
+          )
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start, 
         children: <Widget>[
           Flexible(
             child: CustomerMap(
-                initialPosition: const LatLng(35.31873, -82.46095),
-                mapController: _mapController),
+              initialPosition: const LatLng(35.31873, -82.46095),
+              mapController: _mapController),
             flex: 3,
           ),
           Flexible(
@@ -344,8 +354,8 @@ class CustomerDetails extends StatelessWidget {
     return Column(
       children: jobs.map((job) {
         return StreamBuilder<Job>(
-        stream: db.getJob(job),
-        builder: (context, snapshot) {
+          stream: db.getJob(job),
+          builder: (context, snapshot) {
           var $job = snapshot.data;
           
           if ($job == null) {
@@ -380,6 +390,37 @@ class CustomerDetails extends StatelessWidget {
     );
   }
 
+  // The customer wants to show all job notes in the CustomerDetails view.
+  // So I need to get the Jobs by id, then display the notes field. I hate to duplicate code for this.
+  // Alternatively, I could have one Jobs stream where customer is defined, but that would require an index in Firestore.
+  // No biggie, but that wouldn't be as performant. Need to do some tests to compare. 
+  Widget _getNotes(List<String> jobs){
+    return Column(
+      children: jobs.map((job) {
+        return StreamBuilder<Job>(
+          stream: db.getJob(job),
+          builder: (context, snapshot) {
+          var $job = snapshot.data;
+          
+          if ($job == null) {
+            return CupertinoActivityIndicator(
+              animating: true,
+            );
+          }
+          if (snapshot.hasError) {
+            return Text('Error fetching job notes');
+          }
+          var jobDate = $job.scheduled.year.toString() + '-' + $job.scheduled.month.toString() + '-' + $job.scheduled.day.toString();
+          return ListTile(
+            title: Text(jobDate, style: TextStyle(fontSize: 14)),
+            subtitle: Text($job.notes, style: TextStyle(fontSize: 16)),
+            contentPadding: EdgeInsets.fromLTRB(16, 0, 16, 6),
+          );
+        });
+      }).toList()
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     var customer = Provider.of<Customer>(context);
@@ -392,9 +433,16 @@ class CustomerDetails extends StatelessWidget {
       navigationBar: CupertinoNavigationBar(
         middle: Text('${customer.firstName}' + ' ' + '${customer.lastName}'),
         trailing: CupertinoButton(
-            child: Text('Edit', style: TextStyle(fontSize: 12)),
-            onPressed: () => _editCustomer(customer, context)),
+            child: Text('Edit Customer', style: TextStyle(fontSize: 12)),
+            onPressed: () => 
+              Navigator.of(context).push(
+              CupertinoPageRoute(builder: (context) {
+                return CustomerAddEdit(customer);
+              }),
+            )
+        ),
       ),
+      
       child: Container(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -453,9 +501,30 @@ class CustomerDetails extends StatelessWidget {
               ),
               margin: EdgeInsets.all(10),
               child: StreamProvider<List<CustomerLocation>>(
-                  builder: (context) => db.streamlocations(customer.id),
-                  child: Locations(customer: customer),
-                ),
+                builder: (context) => db.streamlocations(customer.id),
+                child: Locations(customer: customer),
+              ),
+            ),
+                        Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              margin: EdgeInsets.all(10),
+              child: ExpansionTile(
+                leading: Icon(Icons.event_note),
+                initiallyExpanded: true,
+                title: Text('Job Notes'),
+                trailing: Container(height: 0.0, width: 0.0),
+                children: <Widget>[
+                  customer.jobs != null ? _getNotes(customer.jobs) : 
+                  ListTile(
+                    title: Text(
+                      'No notes history for this job.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
             Card(
               shape: RoundedRectangleBorder(

@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -265,18 +265,21 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
   Widget _buildButtons() {
     return Column(
       children: <Widget>[
+        SizedBox(height: 10),
         Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             CupertinoButton(
               child: Text('Today'),
+              color: Colors.white70,
               onPressed: () {
                 _calendarController.setSelectedDay(DateTime.now(), runCallback: true);
               },
             ),
             CupertinoButton(
               child: Text('Week'),
+              color: Colors.white70,
               onPressed: () {
                 setState(() {
                   _calendarController.setCalendarFormat(CalendarFormat.week);
@@ -285,6 +288,7 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
             ),
             CupertinoButton(
               child: Text('Month'),
+              color: Colors.white70,
               onPressed: () {
                 setState(() {
                   _calendarController.setCalendarFormat(CalendarFormat.month);
@@ -301,11 +305,13 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
     var user = Provider.of<FirebaseUser>(context);
     if (_selectedJobs == null || _selectedJobs.length == 0) {
       return Container(
+        padding: EdgeInsets.all(20),
         child: Text('No jobs currently scheduled for this day.'),
       );
     }
 
     return ListView(
+      padding: EdgeInsets.only(top: 4),
       shrinkWrap: true,
       children: _selectedJobs.map((job) {
         bool status = job.done;
@@ -334,10 +340,6 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
                     subtitle: Text(job.description, style: doneColor),
                     trailing: status ? jobDone : jobPending,
                     onTap: () {
-                      // setState(() {
-                      //   var $j = db.getJob(job.id);
-                      //   _streamController.addStream($j);
-                      // });
                       Navigator.of(context).push(
                         CupertinoPageRoute(builder: (context) {
                           // This is a bit of a hack to get around the fact that the job returned 

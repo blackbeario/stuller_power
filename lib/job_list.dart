@@ -19,6 +19,7 @@ class JobList extends StatelessWidget {
     }
 
     return CupertinoPageScaffold(
+      backgroundColor: CupertinoColors.extraLightBackgroundGray,
       navigationBar: CupertinoNavigationBar(
         middle: Text('Schedule'),
       ),

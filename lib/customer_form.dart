@@ -25,18 +25,39 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
   final _mobileController = TextEditingController();
   final _emailController = TextEditingController();
   final _notesController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _areaController = TextEditingController();
+  final _billingController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _zipController = TextEditingController();
 
   _CustomerAddEditState(Customer customer);
 
   @override
   void initState() {
     super.initState();
-      _firstNameController.text = widget.customer.firstName;
-      _lastNameController.text = widget.customer.lastName;
-      _mainController.text = widget.customer.main;
-      _mobileController.text = widget.customer.mobile;
-      _emailController.text = widget.customer.email;
-      _notesController.text = widget.customer.notes;
+    bool $customer = widget.customer != null;
+      _firstNameController.text = $customer ? widget.customer.firstName : '';
+      _lastNameController.text = $customer ? widget.customer.lastName : '';
+      _mainController.text = $customer ? widget.customer.main : '';
+      _mobileController.text = $customer ? widget.customer.mobile : '';
+      _emailController.text = $customer ? widget.customer.email : '';
+      _notesController.text = $customer ? widget.customer.notes : '';
+  }
+
+  String locid; bool billing; String address; String area; String city; String state; String zip;
+
+  // Pass LocationForm child class text field values via callback.
+  void myCallback(String _address, String _area, String _city, String _state, String _zip) {
+    setState(() {
+      // _billingController.text = _billing;
+      _addressController.text = _address;
+      _areaController.text = _area;
+      _cityController.text = _city;
+      _stateController.text = _state;
+      _zipController.text = _zip;
+    });
   }
 
   @override
@@ -47,22 +68,13 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
     _mobileController.dispose();
     _emailController.dispose();
     _notesController.dispose();
+    _addressController.dispose();
+    _areaController.dispose();
+    _billingController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _zipController.dispose();
     super.dispose();
-  }
-
-  String locid; bool billing; String address; String area; String city; String state; String zip;
-
-  // Pass LocationForm child class text field values via callback.
-  void callback(_locid, _billing, _address, _area, _city, _state, _zip) {
-    setState(() {
-      locid = _locid;
-      billing = _billing;
-      address = _address;
-      area = _area;
-      city = _city;
-      state = _state;
-      zip = _zip;
-    });
   }
 
   String _validatePhoneNumber(String value) {
@@ -75,11 +87,12 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
 
   @override
   Widget build(BuildContext context) {
+    var $name = widget.customer != null ? widget.customer.firstName + ' ' + widget.customer.lastName : 'New Customer';
     return CupertinoPageScaffold(
       resizeToAvoidBottomInset: true,
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
       navigationBar: CupertinoNavigationBar(
-        middle: Text('${widget.customer.firstName}' + ' ' + '${widget.customer.lastName}'),
+        middle: Text($name),
         trailing: CupertinoButton(
           child: Text('Save', style: TextStyle(fontSize: 12)),
           onPressed: () => _updateCustomer(widget.customer, context)
@@ -96,42 +109,36 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               // First Name input
-              TextField(
+              TextFormField(
                 style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                // onChanged: (text) => _customerAddEditBloc.firstNameSink.add(text),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                   hintText: 'First name',
                   labelText: 'First name',
-                  // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _firstNameController,
                 keyboardType: TextInputType.text
               ),
 
               // Last Name input
-              TextField(
+              TextFormField(
                 style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                // onChanged: (text) => _customerAddEditBloc.firstNameSink.add(text),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                   hintText: 'Last name',
                   labelText: 'Last name',
-                  // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _lastNameController,
                 keyboardType: TextInputType.text
               ),
 
               // Email input
-              TextField(
+              TextFormField(
                 style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                // onChanged: (text) => _customerAddEditBloc.firstNameSink.add(text),
                 decoration: InputDecoration(
                   contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                   hintText: 'Email',
                   labelText: 'Email',
-                  // errorText: errorSnapshot.data == 0 ? Localization.of(context).firstNameEmpty : null
                 ),
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress
@@ -187,11 +194,12 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
               // Add some space between sections
               SizedBox(height: 40),
 
+              widget.customer != null ? 
               StreamProvider<List<CustomerLocation>>(
                 builder: (context) => db.streamlocations(widget.customer.id),
                 initialData: <CustomerLocation>[],
-                child: LocationWidget(customer: widget.customer, callback: callback),
-              ),
+                child: LocationWidget(customer: widget.customer, callback: myCallback),
+              ) : LocationForm(),
             ]
           )
         ),
@@ -200,15 +208,17 @@ class _CustomerAddEditState extends State<CustomerAddEdit>{
   }
 
   Future<bool> _updateCustomer(customer, BuildContext context) {
+    var $id = widget.customer != null ? widget.customer.id : _firstNameController.text + ' ' + _lastNameController.text;
     Navigator.pop(context);
-    db.updateCustomer(
-      widget.customer.id, _firstNameController.text, _lastNameController.text, 
+    db.addUpdateCustomer(
+      $id, _firstNameController.text, _lastNameController.text, 
       _emailController.text, _mainController.text, _mobileController.text,
       _notesController.text
     );
-    // db.updateLocation(
-    //   widget.customer.id, billing, address, area, city, state, zip
-    // );
+    db.updateLocation(
+      $id, _addressController.text, _areaController.text, 
+      _cityController.text, _stateController.text, _zipController.text
+    );
     return Future.value(false);
   }
 }
@@ -245,7 +255,7 @@ class _LocationWidgetState extends State<LocationWidget> {
       children: locations.map((location) {
         bool _billing = location.billing;
         if(locations.length == 1) {
-          return LocationForm(location: location, billing: _billing, callback: widget.callback,);
+          return LocationForm(location: location, billing: _billing, callback: widget.callback);
         }
         return ExpansionTile(
           initiallyExpanded: false,
@@ -263,8 +273,8 @@ class LocationForm extends StatefulWidget {
   LocationForm({
     Key key,
     this.callback,
-    @required this.location,
-    @required this.billing,
+    this.location,
+    this.billing,
   }) : super(key: key);
 
   String locid; bool billing; String address; String area; String city; String state; String zip;
@@ -276,31 +286,25 @@ class LocationForm extends StatefulWidget {
 }
 
 class _LocationFormState extends State<LocationForm> {
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _zipcodeController = TextEditingController();
+  final _addressLocController = TextEditingController();
+  final _areaLocController = TextEditingController();
+  final _cityLocController = TextEditingController();
+  final _stateLocController = TextEditingController();
+  final _zipcodeLocController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _addressController.text = widget.location.address;
-    _cityController.text = widget.location.city;
-    _stateController.text = widget.location.state;
-    _zipcodeController.text = widget.location.zipcode;
+    bool $location = widget.location != null;
+    _addressLocController.text = $location ? widget.location.address : '';
+    _areaLocController.text = $location ? widget.location.area : '';
+    _cityLocController.text = $location ? widget.location.city : '';
+    _stateLocController.text = $location ? widget.location.state : '';
+    _zipcodeLocController.text = $location ? widget.location.zipcode : '';
   }
 
   void _billingChanged(bool value) {
     setState(() => widget.billing = value);
-  }
-
-  @override
-  void dispose() {
-    _addressController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _zipcodeController.dispose();
-    super.dispose();
   }
 
   @override
@@ -334,7 +338,7 @@ class _LocationFormState extends State<LocationForm> {
 
             // Billing
             CheckboxListTile(
-              value: widget.billing,
+              value: widget.billing != null ? widget.billing : true,
               onChanged: (bool) =>
                 _billingChanged,
                 // widget.callback(
@@ -347,70 +351,95 @@ class _LocationFormState extends State<LocationForm> {
             ),
 
             // Address input
-            TextField(
+            TextFormField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),                
-              onEditingComplete: () {
-                print(_addressController.text);
-                widget.callback(
-                  widget.address = _addressController.text
-                );
-              },
+              // onEditingComplete: () {
+              //   print(_addressLocController.text);
+              //   setState(() {
+              //     widget.callback(
+              //       widget.address = _addressLocController.text,
+              //       // widget.callback(widget.address)
+              //     );
+              //   });
+              // },
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'Address',
                 hintText: 'Address', 
-                // errorText: errorSnapshot.data == 1 ? Localization.of(context).addressEmpty : null
               ),
-              controller: _addressController,
+              controller: _addressLocController,
+              keyboardType: TextInputType.text
+            ),
+
+            // Area input
+            TextField(
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),                
+              // onEditingComplete: () {
+              //   print(_areaLocController.text);
+              //   setState(() {
+              //     widget.callback(
+              //       widget.area = _areaLocController.text
+              //     );
+              //   });
+              // },
+              decoration: InputDecoration(
+                contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
+                labelText: 'Area',
+                hintText: 'Area', 
+              ),
+              controller: _areaLocController,
             ),
 
             // City input
-            TextField(
+            TextFormField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              onChanged: (text) =>
-                widget.callback(
-                  widget.address = _cityController.text
-                ),
+              // onChanged: (text) =>
+              // setState(() {
+              //   widget.callback(
+              //     widget.city = _cityLocController.text
+              //   );
+              // }),
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'City',
                 hintText: "City", 
-                // errorText: errorSnapshot.data == 0 ? Localization.of(context).cityEmpty : null
               ),
-              controller: _cityController,
+              controller: _cityLocController,
             ),
 
             // State input
-            TextField(
+            TextFormField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              onChanged: (text) => 
-                widget.callback(
-                  widget.address = _stateController.text
-                ),
+              // onChanged: (text) => 
+              // setState(() {
+              //   widget.callback(
+              //     widget.state = _stateLocController.text
+              //   );
+              // }),
               decoration: InputDecoration(
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'State',
                 hintText: "State", 
-                // errorText: errorSnapshot.data == 0 ? Localization.of(context).stateEmpty : null
                 ),
-              controller: _stateController,
+              controller: _stateLocController,
             ),
 
             // Zipcode input
-            TextField(
+            TextFormField(
               style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-              onChanged: (text) =>
-                widget.callback(
-                  widget.address = _zipcodeController.text
-                ),
+              // onFieldSubmitted: (text) =>
+              // setState(() {
+              //   widget.callback(
+              //     widget.zip = _zipcodeLocController.text
+              //   );
+              // }),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.fromLTRB(10, 20, 10, 20),
                 labelText: 'ZipCode',
                 hintText: 'Zipcode', 
-                // errorText: errorSnapshot.data == 0 ? Localization.of(context).zipcodeEmpty : null
               ),
-              controller: _zipcodeController,
+              controller: _zipcodeLocController,
             ),
           ],
         ),

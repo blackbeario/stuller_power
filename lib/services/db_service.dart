@@ -26,18 +26,8 @@ class DatabaseService {
   }
 
   /// Customers collection stream for map and list.
-  /// 
-  /// Considering the customer db is so large, db reads can be easily be over
-  /// the Firestore 50k daily doc read limit in minutes with several users.
-  /// Need to either design a UI where we aren't reading all the customers on load
-  /// or limit the snapshot reads until needed.
-  /// 
-  /// Or, optionally cache customers on user's device to avoid additional reads.
-  /// 
-  /// Or, redesign customer data to include locations and generators on main customerID
-  /// document instead of subcollections. Dammit.
   Stream<List<Customer>> streamCustomers() {
-    var ref = _db.collection('customers').limit(10);
+    var ref = _db.collection('customers').where('lastName', isEqualTo: 'Frazier');
     return ref.snapshots().map((list) =>
       list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
@@ -87,6 +77,13 @@ class DatabaseService {
       .map((snap) => Job.fromFirestore(snap));
   }
 
+  /// Jobs collection stream.
+  // Stream<List<Job>> streamCustomerJobs(String id) {
+  //   var ref = _db.collection('jobs').where('customer', isEqualTo: id).orderBy('scheduled');
+  //   return ref.snapshots().map((list) =>
+  //     list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  // }
+
   Stream<User> streamUser(String id) {
     return _db.collection('users').document(id).snapshots()
       .map((snap) => User.fromFirestore(snap.data));
@@ -110,12 +107,12 @@ class DatabaseService {
       );
   }
 
-  Future<void> updateCustomer(
+  Future<void> addUpdateCustomer(
     String id, String firstName, String lastName, String email, String main, String mobile, String notes
   ) async {
     var $now = DateTime.now();
     var updated = $now.millisecondsSinceEpoch;
-    return await _db.collection('customers').document(id).updateData({
+    return await _db.collection('customers').document(id).setData({
       'updated': updated, 'firstName': firstName, 'lastName': lastName, 
       'email': email  ?? '', 'main': main  ?? '', 'mobile': mobile ?? '',
       'notes': notes
@@ -153,10 +150,10 @@ class DatabaseService {
   }
 
   Future<void> updateLocation(
-    String id, bool billing, String address, String area, String city, String state, String zipcode
+    String id, String address, String area, String city, String state, String zipcode
   ) async {
     return await _db.collection('customers').document(id).collection('locations').document('primary').updateData({
-      'billing': billing, 'address': address ?? '', 'area': area ?? '', 
+      'address': address ?? '', 'area': area ?? '', 
       'city': city  ?? '', 'state': state  ?? '', 'zipcode': zipcode ?? ''
     });
   }

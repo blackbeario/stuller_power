@@ -103,7 +103,7 @@ class GeneratorTile extends StatelessWidget {
           print(snapshot.error);
           return ListTile(
             leading: Icon(Icons.gamepad, color: Colors.orange),
-            title: Text('There was an error'),
+            title: Text('There was an error retrieving the generator data'),
           );
         }
         else if (snapshot.hasData) {

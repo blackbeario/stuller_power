@@ -9,8 +9,9 @@ class Customer {
   final String mobile;
   final String notes;
   final List<String> jobs;
+  final List<String> locations;
 
-  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes, this.jobs });
+  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes, this.jobs, this.locations });
 
   factory Customer.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -23,7 +24,8 @@ class Customer {
       main: data['main'] ?? '',
       mobile: data['mobile'] ?? '',
       notes: data['notes'] ?? '',
-      jobs: data['jobs'] != null ? List.from(data['jobs']) : null
+      jobs: data['jobs'] != null ? List.from(data['jobs']) : null,
+      locations: data['jobs'] != null ? List.from(data['jobs']) : null
     );
   }
 
@@ -35,7 +37,8 @@ class Customer {
       'main' : main,
       'mobile' : mobile,
       'notes' : notes,
-      'jobs' : jobs
+      'jobs' : jobs,
+      'locations' : locations
     };
 }
 
