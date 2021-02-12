@@ -19,7 +19,7 @@ class CustomerMap extends StatefulWidget {
     @required this.initialPosition,
     @required this.mapController,
   }) : super(key: key);
-  
+
   final LatLng initialPosition;
   final Completer<GoogleMapController> mapController;
 
@@ -56,10 +56,8 @@ class _CustomerMapState extends State<CustomerMap> {
     return Stack(
       children: [
         GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: widget.initialPosition,
-            zoom: 10
-          ),
+          initialCameraPosition:
+              CameraPosition(target: widget.initialPosition, zoom: 11),
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
           mapType: _currentMapType,
@@ -72,16 +70,19 @@ class _CustomerMapState extends State<CustomerMap> {
           child: Align(
             alignment: Alignment(1, 0),
             child: Column(
-              children: <Widget> [
+              children: <Widget>[
                 FlatButton(
                   padding: EdgeInsets.fromLTRB(0, 40, 40, 20),
                   onPressed: _animateToUser,
-                  child: Icon(Icons.zoom_out_map, color: pressAttention ? Colors.white : Colors.black),
+                  child: Icon(Icons.zoom_out_map,
+                      color: pressAttention ? Colors.white : Colors.black),
                 ),
                 FlatButton(
                   padding: EdgeInsets.fromLTRB(0, 40, 40, 0),
                   onPressed: _onMapTypeButtonPressed,
-                  child: Icon(Icons.map, size: 20.0, color: pressAttention ? Colors.white : Colors.black),
+                  child: Icon(Icons.map,
+                      size: 20.0,
+                      color: pressAttention ? Colors.white : Colors.black),
                 ),
               ],
             ),
@@ -95,9 +96,11 @@ class _CustomerMapState extends State<CustomerMap> {
     // Get the location of the current user.
     // var pos = await location.getLocation();
     // double lat = pos.latitude;
-    double lat = 35.31873;
     // double lng = pos.longitude;
-    double lng = -82.46095;
+
+    // Setting lat/lng manually for testing
+    double lat = 35.324767875803424;
+    double lng = -82.54716329950985;
 
     // Sets a point for the current user location
     GeoFirePoint center = geo.point(latitude: lat, longitude: lng);
@@ -105,27 +108,32 @@ class _CustomerMapState extends State<CustomerMap> {
     // Stream of customers list
     var customers = Provider.of<List<Customer>>(context);
 
-    // if (customers != false) {
-    customers.forEach((Customer customer) {
-      var ref = firestore.collection('customers').document(customer.id).collection('locations');
-      
-      /// The radius affects how many markers are shown on the map respective to the location of the user.
-      /// It does NOT affect how many customers are queried from Firestore, since
-      /// we're calling streamCustomers() as a StreamProvider in main.dart.
-      double radius = 50;
-      String field = 'position';
+    if (customers != null) {
+      /// Get the locations for each customer.
+      /// Shouldn't this be called with streamlocations()?
+      customers.forEach((Customer customer) {
+        // var ref = db.streamlocations(customer.id);
+        var ref = firestore
+            .collection('customers')
+            .document(customer.id)
+            .collection('locations');
 
-      Stream<List<DocumentSnapshot>> stream = geo.collection(collectionRef: ref).within(
-        center: center, 
-        radius: radius, 
-        field: field,
-        strictMode: true
-      );
+        /// The radius affects how many markers are shown on the map respective to the location of the user.
+        /// It does NOT affect how many customers are queried from Firestore, since
+        /// we're calling streamCustomers() as a StreamProvider in main.dart.
+        double radius = 50;
+        String field = 'position';
 
-      stream.listen((List<DocumentSnapshot> documentList) {
-        _updateMarkers(customer, documentList);
+        Stream<List<DocumentSnapshot>> stream = geo
+            .collection(collectionRef: ref)
+            .within(
+                center: center, radius: radius, field: field, strictMode: true);
+
+        stream.listen((List<DocumentSnapshot> documentList) {
+          _updateMarkers(customer, documentList);
+        });
       });
-    });
+    }
   }
 
   void _updateMarkers(Customer customer, List<DocumentSnapshot> documentList) {
@@ -134,31 +142,37 @@ class _CustomerMapState extends State<CustomerMap> {
       double distance = document.data['distance'];
       String area = document.data['area'];
       String address = document.data['address'];
-      _addMarker(customer, point.latitude, point.longitude, area, address, distance);
+      _addMarker(
+          customer, point.latitude, point.longitude, area, address, distance);
     });
   }
 
   // Draws a canvas circle map marker with color
-  Future<Uint8List> getBytesFromCanvas(int width, int height, Color _color) async {
+  Future<Uint8List> getBytesFromCanvas(
+      int width, int height, Color _color) async {
     final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
     final Canvas canvas = Canvas(pictureRecorder);
     final Paint _paint = Paint()..color = _color;
-    canvas.drawCircle(Offset(width/3.33, height/3.33), height/3.33, _paint);
+    canvas.drawCircle(
+        Offset(width / 3.33, height / 3.33), height / 3.33, _paint);
     final img = await pictureRecorder.endRecording().toImage(width, height);
     final data = await img.toByteData(format: ui.ImageByteFormat.png);
     return data.buffer.asUint8List();
   }
 
-  void _addMarker(Customer customer, double lat, double lng, String area, String address, double distance) async {
-    final Uint8List markerIcon = await getBytesFromCanvas(40, 40, db.markerColor(area));
+  void _addMarker(Customer customer, double lat, double lng, String area,
+      String address, double distance) async {
+    final Uint8List markerIcon =
+        await getBytesFromCanvas(40, 40, db.markerColor(area));
     final name = customer.firstName + ' ' + customer.lastName;
-    final infoText = address + '\n' + 'Distance: ' + distance.toString() + ' mi';
+    final infoText =
+        address + '\n' + 'Distance: ' + distance.toString() + ' mi';
     setState(() {
       _markers.add(
-        Marker (
+        Marker(
           draggable: false,
-          markerId: MarkerId (address),
-          position: LatLng (lat, lng),
+          markerId: MarkerId(address),
+          position: LatLng(lat, lng),
           infoWindow: InfoWindow(
             title: name,
             snippet: infoText,
@@ -166,7 +180,7 @@ class _CustomerMapState extends State<CustomerMap> {
               await Navigator.of(context).push(
                 CupertinoPageRoute(builder: (context) {
                   return StreamProvider<Customer>(
-                    builder: (context) => db.streamCustomer(customer.id),
+                    create: (context) => db.streamCustomer(customer.id),
                     child: CustomerDetails(customer.id),
                   );
                 }),
@@ -198,12 +212,11 @@ class _CustomerMapState extends State<CustomerMap> {
     double lng = -82.46095;
     // var pos = await location.getLocation();
     final controller = await widget.mapController.future;
-    await controller.animateCamera(CameraUpdate.newCameraPosition(
-      CameraPosition(
-        target: LatLng(lat,lng),
-        zoom: 10,
-      )
-    ));
+    await controller
+        .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+      target: LatLng(lat, lng),
+      zoom: 10,
+    )));
   }
 
   @override

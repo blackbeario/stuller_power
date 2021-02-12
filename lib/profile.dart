@@ -10,85 +10,85 @@ import './models/user.dart';
 class Profile extends StatelessWidget {
   final db = DatabaseService();
   final AuthService auth = AuthService();
-  
+
   @override
   Widget build(BuildContext context) {
     var user = Provider.of<FirebaseUser>(context);
     if (user == null) {
       return Center(
-        child: CupertinoActivityIndicator(
-          animating: true,
-        )
-      );
+          child: CupertinoActivityIndicator(
+        animating: true,
+      ));
     }
     return StreamBuilder<User>(
-      stream: db.streamUser(user.uid),
-      builder: (context, snapshot) {
-        var myUser = snapshot.data;
-        if (myUser == null) {
-          return Center(
-            child: Text('Loading...',
-            style: CupertinoTheme.of(context).textTheme.navTitleTextStyle),
-          );
-        }
-        return CupertinoPageScaffold(
-          resizeToAvoidBottomInset: true,
-          navigationBar: CupertinoNavigationBar(
-            middle: Text('Profile'),
-            trailing: CupertinoButton(
-              child: Icon(Icons.power_settings_new),
-              onPressed: () => _requestPop(context)
-            ),
-          ),
-          child: Card(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                ListTile(
-                  leading: Icon(Icons.person),
-                  title: Text(myUser.firstName + ' ' + myUser.lastName),
+        stream: db.streamUser(user.uid),
+        builder: (context, snapshot) {
+          var myUser = snapshot.data;
+          if (myUser == null) {
+            return Center(
+              child: Text('Loading...',
+                  style:
+                      CupertinoTheme.of(context).textTheme.navTitleTextStyle),
+            );
+          }
+          return CupertinoPageScaffold(
+              resizeToAvoidBottomInset: true,
+              navigationBar: CupertinoNavigationBar(
+                middle: Text('Profile'),
+                trailing: CupertinoButton(
+                    child: Icon(Icons.power_settings_new),
+                    onPressed: () => _requestPop(context)),
+              ),
+              child: Card(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    ListTile(
+                      leading: Icon(Icons.person),
+                      title: Text(myUser.firstName + ' ' + myUser.lastName),
+                      subtitle: Text('username'),
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.settings),
+                      title: Text(myUser.role),
+                      subtitle: Text('role'),
+                    ),
+                    ListTile(
+                      leading: Icon(Icons.phone_iphone),
+                      title: Text(myUser.phone),
+                      subtitle: Text('mobile'),
+                    ),
+                  ],
                 ),
-                ListTile(
-                  leading: Icon(Icons.settings),
-                  title: Text(myUser.role),
-                ),
-                ListTile(
-                  leading: Icon(Icons.phone_iphone),
-                  title: Text(myUser.phone),
-                ),
-              ],
-            ),
-          )
-        );
-      }
-    );
+              ));
+        });
   }
 
   Future<bool> _requestPop(BuildContext context) {
-    showCupertinoDialog(context: context, builder: (BuildContext context) {
-      return CupertinoAlertDialog(
-        title: Text('Signout'),
-        actions: <Widget>[
-          CupertinoDialogAction(
-            child: Text('Okay'),
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Discard');
-              auth.signOut();
-            }
-          ),
-          CupertinoDialogAction(
-            child: Text('Cancel'),
-            isDefaultAction: true,
-            onPressed: () {
-              Navigator.pop(context, 'Cancel');
-            },
-          ),
-        ],
-      );
-    });
+    showCupertinoDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return CupertinoAlertDialog(
+            title: Text('Signout'),
+            actions: <Widget>[
+              CupertinoDialogAction(
+                  child: Text('Okay'),
+                  isDestructiveAction: true,
+                  onPressed: () {
+                    Navigator.pop(context, 'Discard');
+                    auth.signOut();
+                  }),
+              CupertinoDialogAction(
+                child: Text('Cancel'),
+                isDefaultAction: true,
+                onPressed: () {
+                  Navigator.pop(context, 'Cancel');
+                },
+              ),
+            ],
+          );
+        });
     return new Future.value(false);
   }
 }
-

@@ -9,9 +9,16 @@ class Customer {
   final String mobile;
   final String notes;
   final List<String> jobs;
-  final List<String> locations;
 
-  Customer({ this.id, this.firstName, this.lastName, this.email, this.main, this.mobile, this.notes, this.jobs, this.locations });
+  Customer(
+      {this.id,
+      this.firstName,
+      this.lastName,
+      this.email,
+      this.main,
+      this.mobile,
+      this.notes,
+      this.jobs});
 
   factory Customer.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
@@ -25,23 +32,19 @@ class Customer {
       mobile: data['mobile'] ?? '',
       notes: data['notes'] ?? '',
       jobs: data['jobs'] != null ? List.from(data['jobs']) : null,
-      locations: data['jobs'] != null ? List.from(data['jobs']) : null
     );
   }
 
-  Map<String, dynamic> toJson() =>
-    {
-      'firstName' : firstName,
-      'lastName' : lastName,
-      'email' : email,
-      'main' : main,
-      'mobile' : mobile,
-      'notes' : notes,
-      'jobs' : jobs,
-      'locations' : locations
-    };
+  Map<String, dynamic> toJson() => {
+        'firstName': firstName,
+        'lastName': lastName,
+        'email': email,
+        'main': main,
+        'mobile': mobile,
+        'notes': notes,
+        'jobs': jobs,
+      };
 }
-
 
 class CustomerLocation {
   final String id;
@@ -54,25 +57,32 @@ class CustomerLocation {
   final String zipcode;
   final Map position;
 
-  CustomerLocation({ this.id, this.billing, this.area, this.name, this.address, this.city, this.state, this.zipcode, this.position });
+  CustomerLocation(
+      {this.id,
+      this.billing,
+      this.area,
+      this.name,
+      this.address,
+      this.city,
+      this.state,
+      this.zipcode,
+      this.position});
 
   factory CustomerLocation.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
-    
+
     return CustomerLocation(
-      id: doc.documentID,
-      billing: data['billing'] ?? true,
-      area: data['area'] ?? '',
-      name: data['name'] ?? '',
-      address: data['address'] ?? 'Address unknown',
-      city: data['city'] ?? 'no city provided',
-      state: data['state'] ?? '',
-      zipcode: data['zipcode'] ?? '',
-      position: data['position'] ?? null
-    );
+        id: doc.documentID,
+        billing: data['billing'] ?? true,
+        area: data['area'] ?? '',
+        name: data['name'] ?? '',
+        address: data['address'] ?? 'Address unknown',
+        city: data['city'] ?? 'no city provided',
+        state: data['state'] ?? '',
+        zipcode: data['zipcode'] ?? '',
+        position: data['position'] ?? null);
   }
 }
-
 
 class Generator {
   final String airFilter;
@@ -87,17 +97,27 @@ class Generator {
   final String warranty;
   final String wifi;
 
-  Generator({ this.airFilter, this.battery, this.exerciseTime, 
-  this.model, this.oilFilter, this.serial, this.sparkPlugs, this.transferLocation,
-  this.transferSerial, this.warranty, this.wifi
-  });
+  Generator(
+      {this.airFilter,
+      this.battery,
+      this.exerciseTime,
+      this.model,
+      this.oilFilter,
+      this.serial,
+      this.sparkPlugs,
+      this.transferLocation,
+      this.transferSerial,
+      this.warranty,
+      this.wifi});
 
   factory Generator.fromFirestore(DocumentSnapshot doc) {
     Map data = doc.data;
 
     return Generator(
       airFilter: data['air filter'] ?? '',
-      battery: data['battery'] != null ? DateTime.fromMillisecondsSinceEpoch(data['battery']) : null,
+      battery: data['battery'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(data['battery'])
+          : null,
       exerciseTime: data['exercise time'] ?? '',
       model: data['model'] ?? '',
       oilFilter: data['oil filter'] ?? '',
