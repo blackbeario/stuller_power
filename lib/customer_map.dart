@@ -57,7 +57,7 @@ class _CustomerMapState extends State<CustomerMap> {
       children: [
         GoogleMap(
           initialCameraPosition:
-              CameraPosition(target: widget.initialPosition, zoom: 11),
+              CameraPosition(target: widget.initialPosition, zoom: 10),
           myLocationEnabled: true,
           myLocationButtonEnabled: false,
           mapType: _currentMapType,
