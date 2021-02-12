@@ -19,145 +19,207 @@ class DatabaseService {
   /// Get a stream of a single document.
   Stream<Customer> streamCustomer(String id) {
     return _db
-      .collection('customers')
-      .document(id)
-      .snapshots()
-      .map((snap) => Customer.fromFirestore(snap));
+        .collection('customers')
+        .document(id)
+        .snapshots()
+        .map((snap) => Customer.fromFirestore(snap));
   }
 
   /// Customers collection stream for map and list.
-  /// 
-  /// Considering the customer db is so large, db reads can be easily be over
-  /// the Firestore 50k daily doc read limit in minutes with several users.
-  /// Need to either design a UI where we aren't reading all the customers on load
-  /// or limit the snapshot reads until needed.
-  /// 
-  /// Or, optionally cache customers on user's device to avoid additional reads.
-  /// 
-  /// Or, redesign customer data to include locations and generators on main customerID
-  /// document instead of subcollections. Dammit.
   Stream<List<Customer>> streamCustomers() {
-    var ref = _db.collection('customers').limit(10);
+    var ref = _db.collection('customers');
     return ref.snapshots().map((list) =>
-      list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
+        list.documents.map((doc) => Customer.fromFirestore(doc)).toList());
   }
 
   /// Single customer location for map list screen.
   Stream<List<CustomerLocation>> primarylocation(String id) {
-    var ref = _db.collection('customers').document(id).collection('locations').limit(1);
-    return ref.snapshots().map((list) =>
-      list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
+    var ref = _db
+        .collection('customers')
+        .document(id)
+        .collection('locations')
+        .limit(1);
+    return ref.snapshots().map((list) => list.documents
+        .map((doc) => CustomerLocation.fromFirestore(doc))
+        .toList());
   }
 
   Future<CustomerLocation> getLocation(String id) async {
-    var snap = await _db.collection('customers').document(id).collection('locations').document('primary').get();
+    var snap = await _db
+        .collection('customers')
+        .document(id)
+        .collection('locations')
+        .document('primary')
+        .get();
     return CustomerLocation.fromFirestore(snap);
   }
 
   /// All customer locations, in case they have more than one.
   Stream<List<CustomerLocation>> streamlocations(String id) {
-    var ref = _db.collection('customers').document(id).collection('locations').orderBy('name');
-    return ref.snapshots().map((list) =>
-      list.documents.map((doc) => CustomerLocation.fromFirestore(doc)).toList());
-  }
-
-  /// Generator data per location.
-  Future<Generator> getGenerator(String cid, String lid) async {
-    var snap = await _db.collection('customers').document(cid)
-        .collection('locations').document(lid).collection('generators').document('gen').get();
-    return Generator.fromFirestore(snap);
+    var ref = _db
+        .collection('customers')
+        .document(id)
+        .collection('locations')
+        .orderBy('name');
+    return ref.snapshots().map((list) => list.documents
+        .map((doc) => CustomerLocation.fromFirestore(doc))
+        .toList());
   }
 
   /// Jobs collection stream.
   Stream<List<Job>> streamJobs() {
     var ref = _db.collection('jobs').orderBy('scheduled');
-    return ref.snapshots().map((list) =>
-      list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+    return ref.snapshots().map(
+        (list) => list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  }
+
+  /// Jobs collection stream by user id.
+  Stream<List<Job>> streamJobsByUser(FirebaseUser user) {
+    var ref = _db
+        .collection('jobs')
+        .where('techID', isEqualTo: user.uid)
+        .orderBy('scheduled');
+    return ref.snapshots().map(
+        (list) => list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  }
+
+  /// Stream an individual job.
+  Stream<Job> getJob(String id) {
+    return _db
+        .collection('jobs')
+        .document(id)
+        .snapshots()
+        .map((snap) => Job.fromFirestore(snap));
   }
 
   /// Jobs collection stream.
-  Stream<List<Job>> streamJobsByUser(FirebaseUser user) {
-    var ref = _db.collection('jobs').where('techID', isEqualTo: user.uid).orderBy('scheduled');
-    return ref.snapshots().map((list) =>
-      list.documents.map((doc) => Job.fromFirestore(doc)).toList());
-  }
+  // Stream<List<Job>> streamCustomerJobs(String id) {
+  //   var ref = _db.collection('jobs').where('customer', isEqualTo: id).orderBy('scheduled');
+  //   return ref.snapshots().map((list) =>
+  //     list.documents.map((doc) => Job.fromFirestore(doc)).toList());
+  // }
 
-  Stream<Job> getJob(String id) {
-    return _db.collection('jobs').document(id).snapshots()
-      .map((snap) => Job.fromFirestore(snap));
+  /// Generator data per location.
+  Future<Generator> getGenerator(String cid, String lid) async {
+    var snap = await _db
+        .collection('customers')
+        .document(cid)
+        .collection('locations')
+        .document(lid)
+        .collection('generator')
+        .document('gen')
+        .get();
+    return Generator.fromFirestore(snap);
   }
 
   Stream<User> streamUser(String id) {
-    return _db.collection('users').document(id).snapshots()
-      .map((snap) => User.fromFirestore(snap.data));
+    return _db
+        .collection('users')
+        .document(id)
+        .snapshots()
+        .map((snap) => User.fromFirestore(snap.data));
   }
 
+  /// Get the logged-in user data.
   Future<User> getUser(FirebaseUser user) async {
     var snap = await _db.collection('users').document(user.uid).get();
     return User.fromFirestore(snap);
   }
 
-  Future<void> createCustomer(FirebaseUser user) {
-    return _db
-      .collection('customers')
-      .document(user.uid)
-      .setData(
-        {
-          'firstName': 'Ima',
-          'lastName': 'Newcustomer',
-          'email': 'ima@newcustomer.com'
-        },
-      );
+  /// Get an individual Technician data.
+  Future<User> getTech(String id) async {
+    var snap = await _db.collection('users').document(id).get();
+    return User.fromFirestore(snap);
   }
 
-  Future<void> updateCustomer(
-    String id, String firstName, String lastName, String email, String main, String mobile, String notes
-  ) async {
+  Future<void> createCustomer(FirebaseUser user) {
+    return _db.collection('customers').document(user.uid).setData(
+      {
+        'firstName': 'Ima',
+        'lastName': 'Newcustomer',
+        'email': 'ima@newcustomer.com'
+      },
+    );
+  }
+
+  Future<void> addUpdateCustomer(String id, String firstName, String lastName,
+      String email, String main, String mobile, String notes, List jobs
+      // String locationName,
+      // String locationAddress,
+      // String locationArea,
+      // String locationCity,
+      // String locationState,
+      // String locationZip,
+      ) async {
     var $now = DateTime.now();
     var updated = $now.millisecondsSinceEpoch;
-    return await _db.collection('customers').document(id).updateData({
-      'updated': updated, 'firstName': firstName, 'lastName': lastName, 
-      'email': email  ?? '', 'main': main  ?? '', 'mobile': mobile ?? '',
-      'notes': notes
+    return await _db.collection('customers').document(id).setData({
+      'updated': updated,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email ?? '',
+      'main': main ?? '',
+      'mobile': mobile ?? '',
+      'notes': notes,
+      'jobs': jobs
+      // 'locations': {
+      //   'primary': {
+      //     'name': locationName,
+      //     'address': locationAddress,
+      //     'area': locationArea,
+      //     'city': locationCity,
+      //     'state': locationState,
+      //     'zipcode': locationZip,
+      //   }
+      // }
     });
   }
 
-    Future<void> updateJob(
-    String id, String category, String customer, String description, 
-    String techID, String title, String notes
-  ) async {
+  Future<void> updateJob(String id, String category, String customer,
+      String description, String techID, String title, String notes) async {
     var $now = DateTime.now();
     var updated = $now.millisecondsSinceEpoch;
     return await _db.collection('jobs').document(id).updateData({
-      'updated': updated, 'category': category ?? '', 'customer': customer ?? '', 
-      'description': description  ?? '', 'techID': techID ?? '', 'title': title  ?? '', 
+      'updated': updated,
+      'category': category ?? '',
+      'customer': customer ?? '',
+      'description': description ?? '',
+      'techID': techID ?? '',
+      'title': title ?? '',
       'notes': notes
     });
   }
 
   Future<void> addLocation(FirebaseUser user, dynamic location) {
     return _db
-      .collection('customers')
-      .document(user.uid)
-      .collection('locations')
-      .add(location);
+        .collection('customers')
+        .document(user.uid)
+        .collection('locations')
+        .add(location);
   }
 
   Future<void> removeLocation(FirebaseUser user, String id) {
     return _db
-      .collection('customers')
-      .document(user.uid)
-      .collection('locations')
-      .document(id)
-      .delete();
+        .collection('customers')
+        .document(user.uid)
+        .collection('locations')
+        .document(id)
+        .delete();
   }
 
-  Future<void> updateLocation(
-    String id, bool billing, String address, String area, String city, String state, String zipcode
-  ) async {
-    return await _db.collection('customers').document(id).collection('locations').document('primary').updateData({
-      'billing': billing, 'address': address ?? '', 'area': area ?? '', 
-      'city': city  ?? '', 'state': state  ?? '', 'zipcode': zipcode ?? ''
+  Future<void> updateLocation(String id, String address, String area,
+      String city, String state, String zipcode) async {
+    return await _db
+        .collection('customers')
+        .document(id)
+        .collection('locations')
+        .document('primary')
+        .updateData({
+      'address': address ?? '',
+      'area': area ?? '',
+      'city': city ?? '',
+      'state': state ?? '',
+      'zipcode': zipcode ?? ''
     });
   }
 
@@ -167,13 +229,19 @@ class DatabaseService {
 
   Future<void> startJob(String id) async {
     var $now = DateTime.now().millisecondsSinceEpoch;
-    return await _db.collection('jobs').document(id).updateData({'started': $now});
+    return await _db
+        .collection('jobs')
+        .document(id)
+        .updateData({'started': $now});
   }
 
   Future<void> updateDone(String id, bool done) async {
     var $now = DateTime.now();
     var ended = done ? $now.millisecondsSinceEpoch : null;
-    return await _db.collection('jobs').document(id).updateData({'done': done, 'ended': ended});
+    return await _db
+        .collection('jobs')
+        .document(id)
+        .updateData({'done': done, 'ended': ended});
   }
 
   // Future<DocumentReference> addGeoPoint(FirebaseUser user) async {
@@ -181,7 +249,7 @@ class DatabaseService {
   //   Geoflutterfire geo = Geoflutterfire();
   //   var pos = await location.getLocation();
   //   GeoFirePoint point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
-  //   return _db.collection('users').document(user.uid).collection('locations').add({ 
+  //   return _db.collection('users').document(user.uid).collection('locations').add({
   //     'position': point.data,
   //   });
   // }
@@ -226,6 +294,9 @@ class DatabaseService {
         break;
       case 'Horse Shoe':
         return Colors.red[700];
+        break;
+      case 'Etowah':
+        return Colors.green[700];
         break;
       default:
     }

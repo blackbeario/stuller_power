@@ -29,22 +29,21 @@ class Locations extends StatelessWidget {
       children: locations.map((location) {
         bool _billing = location.billing;
 
-        if(locations.length == 1) {
+        if (locations.length == 1) {
           return LocationTile(
-            billing: _billing, customer: customer, location: location
-          );
+              billing: _billing, customer: customer, location: location);
         }
         return ExpansionTile(
           initiallyExpanded: true,
           key: PageStorageKey<CustomerLocation>(location),
           title: Text(location.name.toUpperCase()),
           children: <Widget>[
-            LocationTile(billing: _billing, customer: customer, location: location)
+            LocationTile(
+                billing: _billing, customer: customer, location: location)
           ],
         );
       }).toList(),
     );
-    
   }
 }
 
@@ -54,7 +53,8 @@ class LocationTile extends StatelessWidget {
     @required bool billing,
     @required this.customer,
     @required this.location,
-  }) : _billing = billing, super(key: key);
+  })  : _billing = billing,
+        super(key: key);
 
   final bool _billing;
   final Customer customer;
@@ -65,16 +65,23 @@ class LocationTile extends StatelessWidget {
     return Column(
       children: <Widget>[
         ListTile(
-          leading: Icon(Icons.location_on, color: CupertinoColors.destructiveRed),
-          title: location.address != '?' ? 
-            Text(location.address + '\n' + location.city + ' ' + location.state + ', ' + location.zipcode) :  
-            Text(
-              'Customer has no address in database! Edit this customer to correct address.',
-              style: TextStyle(color: CupertinoColors.destructiveRed)
-            ),
+          leading:
+              Icon(Icons.location_on, color: CupertinoColors.destructiveRed),
+          title: location.address != '?'
+              ? Text(location.address +
+                  '\n' +
+                  location.city +
+                  ' ' +
+                  location.state +
+                  ', ' +
+                  location.zipcode)
+              : Text(
+                  'Customer has no address in database! Edit this customer to correct address.',
+                  style: TextStyle(color: CupertinoColors.destructiveRed)),
         ),
         ListTile(
-          leading: Icon(_billing ? CupertinoIcons.check_mark : CupertinoIcons.clear),
+          leading:
+              Icon(_billing ? CupertinoIcons.check_mark : CupertinoIcons.clear),
           title: Text(_billing ? 'Primary Billing' : 'Do Not Bill'),
         ),
         GeneratorTile(customer: customer, location: location),
@@ -103,27 +110,27 @@ class GeneratorTile extends StatelessWidget {
           print(snapshot.error);
           return ListTile(
             leading: Icon(Icons.gamepad, color: Colors.orange),
-            title: Text('There was an error'),
+            title: Text('No generator installed'),
           );
-        }
-        else if (snapshot.hasData) {
+        } else if (snapshot.hasData) {
           return GestureDetector(
             child: Material(
               child: ListTile(
-                leading: Image(image: AssetImage('assets/generator.jpg'), height: 20,),
+                leading: Image(
+                  image: AssetImage('assets/generator.jpg'),
+                  height: 20,
+                ),
                 title: Text('Generator Details'),
                 trailing: Icon(Icons.arrow_forward_ios),
               ),
             ),
             onTap: () {
-              Navigator.of(context).push(
-                CupertinoPageRoute(builder: (context) {
+              Navigator.of(context).push(CupertinoPageRoute(builder: (context) {
                 return GeneratorDetail(generator: snapshot.data);
               }));
             },
           );
-        }
-        else {
+        } else {
           return ListTile(
             leading: Icon(Icons.gamepad, color: Colors.orange),
             title: Text('No generator yet'),
@@ -135,21 +142,26 @@ class GeneratorTile extends StatelessWidget {
 }
 
 class GeneratorDetail extends StatelessWidget {
-  const GeneratorDetail({
-    Key key,
-    @required this.generator,
-    this.old
-    }) : super(key: key);
+  const GeneratorDetail({Key key, @required this.generator, this.old})
+      : super(key: key);
 
-    final Generator generator;
-    final bool old;
+  final Generator generator;
+  final bool old;
 
   @override
   Widget build(BuildContext context) {
-      final _batteryTime = generator.battery != null ? formatDate(generator.battery, [M, ' ', d, ' ', yyyy]) : '';
-      final _batteryAge = generator.battery != null ? DateTime.now().difference(generator.battery).inDays : null;
-      // Bool is battery older than four years (1460 days)?
-      bool _oldBattery = _batteryAge != null ? _batteryAge >= 1460 ? true : false : false;
+    final _batteryTime = generator.battery != null
+        ? formatDate(generator.battery, [M, ' ', d, ' ', yyyy])
+        : '';
+    final _batteryAge = generator.battery != null
+        ? DateTime.now().difference(generator.battery).inDays
+        : null;
+    // Bool is battery older than four years (1460 days)
+    bool _oldBattery = _batteryAge != null
+        ? _batteryAge >= 1460
+            ? true
+            : false
+        : false;
 
     return CupertinoPageScaffold(
       backgroundColor: CupertinoColors.extraLightBackgroundGray,
@@ -166,77 +178,82 @@ class GeneratorDetail extends StatelessWidget {
           shrinkWrap: true,
           children: <Widget>[
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,20,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 20, 40, 0),
               leading: Icon(Icons.filter_drama),
               title: Text('Air Filter:'),
               trailing: Text(generator.airFilter),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: _oldBattery ? Icon(Icons.battery_alert, color: Colors.red,) : Icon(Icons.battery_charging_full),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
+              leading: _oldBattery
+                  ? Icon(
+                      Icons.battery_alert,
+                      color: Colors.red,
+                    )
+                  : Icon(Icons.battery_charging_full),
               title: Text('Battery Age:'),
-              trailing: _oldBattery ? Text(_batteryTime, style: TextStyle(color: Colors.red)) : Text(_batteryTime),
+              trailing: _oldBattery
+                  ? Text(_batteryTime, style: TextStyle(color: Colors.red))
+                  : Text(_batteryTime),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.directions_run),
-              title: Text('Excercise Time:'),
-              trailing: Text(generator.exerciseTime)
-            ),
+                contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
+                leading: Icon(Icons.directions_run),
+                title: Text('Excercise Time:'),
+                trailing: Text(generator.exerciseTime)),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.build),
               title: Text('Model:'),
               trailing: Text(generator.model),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
-              leading: Icon(Icons.format_color_fill),
-              title: Text('Oil filter:'),
-              trailing: Text(generator.oilFilter)
-            ),
+                contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
+                leading: Icon(Icons.format_color_fill),
+                title: Text('Oil filter:'),
+                trailing: Text(generator.oilFilter)),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.gamepad),
               title: Text('Serial Number:'),
               trailing: Text(generator.serial),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.flash_on),
               title: Text('Spark Plugs:'),
               trailing: Text(generator.sparkPlugs),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.swap_vertical_circle),
               title: Text('Xfer Location:'),
               trailing: Text(generator.transferLocation),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.swap_vert),
               title: Text('Xfer Serial:'),
               trailing: Text(generator.transferSerial),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.lock_outline),
               title: Text('Warranty:'),
               trailing: Text(generator.warranty),
             ),
             Divider(),
             ListTile(
-              contentPadding: EdgeInsets.fromLTRB(40,0,40,0),
+              contentPadding: EdgeInsets.fromLTRB(40, 0, 40, 0),
               leading: Icon(Icons.wifi),
               title: Text('Wifi:'),
               trailing: Text(generator.wifi.toString()),

@@ -38,7 +38,7 @@ class _JobAddEditState extends State<JobAddEdit>{
       _titleController.text = widget.job.title;
   }
 
-    // Resets customer list from child widget action.
+  // Resets customer list from child widget action.
   void callback(setAssigned) {
     setState(() {
       _customerController.text = setAssigned;

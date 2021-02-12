@@ -1,4 +1,4 @@
-import 'dart:async';
+// import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,17 +10,15 @@ import './job_details.dart';
 import 'package:intl/intl.dart';
 
 class Calendar extends StatefulWidget {
-  Calendar({
-    Key key,
-    this.jobs
-    }) : super(key: key);
-    final List<Job> jobs;
+  Calendar({Key key, this.jobs}) : super(key: key);
+  final List<Job> jobs;
 
   @override
   _CalendarState createState() => _CalendarState();
 }
 
-class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin {
+class _CalendarState extends State<Calendar>
+    with SingleTickerProviderStateMixin {
   Map<DateTime, List<Job>> _jobs = {};
   Map<DateTime, List<Job>> _jobsPrelist = {};
   List _selectedJobs;
@@ -59,7 +57,8 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
     });
   }
 
-  void _onVisibleDaysChanged(DateTime first, DateTime last, CalendarFormat format) {
+  void _onVisibleDaysChanged(
+      DateTime first, DateTime last, CalendarFormat format) {
     // print('CALLBACK: _onVisibleDaysChanged');
   }
 
@@ -83,10 +82,9 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
   Widget _buildTableCalendarWithBuilders(jobs) {
     if (jobs == null) {
       return Center(
-        child: CupertinoActivityIndicator(
-          animating: false,
-        )
-      );
+          child: CupertinoActivityIndicator(
+        animating: false,
+      ));
     }
 
     // Ideally, we'd have an aggregated db query that combines jobs by date.
@@ -94,7 +92,11 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
     jobs.forEach((job) {
       if (job != null && job.scheduled != null) {
         // Sets a ymd variable for the year month date of each job.
-        var ymd = job.scheduled.year.toString() + '-' + job.scheduled.month.toString() + '-' + job.scheduled.day.toString();
+        var ymd = job.scheduled.year.toString() +
+            '-' +
+            job.scheduled.month.toString() +
+            '-' +
+            job.scheduled.day.toString();
         // Checks to see if the jobsPrelist array has the ymd.
         var dateExists = _jobsPrelist.keys.toString().contains(ymd);
         var jobID = job.id;
@@ -104,7 +106,7 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
         }
         // If the date already exists, loop through the array keys
         else {
-          // Create an empty "work" array to use since we can't modify the 
+          // Create an empty "work" array to use since we can't modify the
           // _jobsPrelist array directly while looping through it.
           var toAdd = [];
           _jobsPrelist.forEach((key, value) {
@@ -112,7 +114,7 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
               value.forEach((val) {
                 // Adds the jobID to a temp array if it doesn't already exist in the value list.
                 if (val.id != (jobID)) {
-                  print('Adding ' + jobID + ' to ' + ymd);
+                  // print('Adding ' + jobID + ' to ' + ymd);
                   toAdd.add(job);
                 }
               });
@@ -126,7 +128,11 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
       }
       if (_selectedJobs == null) {
         var now = DateTime.now();
-        var today = now.year.toString() + '-' + now.month.toString() + '-' + now.day.toString();
+        var today = now.year.toString() +
+            '-' +
+            now.month.toString() +
+            '-' +
+            now.day.toString();
         _jobsPrelist.forEach((key, value) {
           if (key.toString().contains(today)) {
             _selectedJobs = value;
@@ -134,8 +140,8 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
         });
       }
     });
-    
-    // Finally, add our _jobsPrelist to our _jobs array that 
+
+    // Finally, add our _jobsPrelist to our _jobs array that
     // gets assigned to the Calendar events parameter.
     _jobs.addAll(_jobsPrelist);
 
@@ -154,10 +160,9 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
           CalendarFormat.month: ''
         },
         calendarStyle: CalendarStyle(
-          outsideDaysVisible: false,
-          weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
-          markersMaxAmount: 20
-        ),
+            outsideDaysVisible: false,
+            weekendStyle: TextStyle().copyWith(color: Colors.blue[800]),
+            markersMaxAmount: 20),
         daysOfWeekStyle: DaysOfWeekStyle(
           weekendStyle: TextStyle().copyWith(color: Colors.blue[600]),
         ),
@@ -172,17 +177,18 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
                 shape: BoxShape.circle,
                 color: Colors.grey[50],
               ),
-                margin: const EdgeInsets.all(6.0),
-                alignment: Alignment.center,
-                child: Text(
-                  '${date.day}',
-                  textAlign: TextAlign.center,
-                ),
+              margin: const EdgeInsets.all(6.0),
+              alignment: Alignment.center,
+              child: Text(
+                '${date.day}',
+                textAlign: TextAlign.center,
+              ),
             );
           },
           selectedDayBuilder: (context, date, _) {
             return FadeTransition(
-              opacity: Tween(begin: 0.0, end: 1.0).animate(_animationController),
+              opacity:
+                  Tween(begin: 0.0, end: 1.0).animate(_animationController),
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -192,7 +198,8 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
                 alignment: Alignment.center,
                 child: Text(
                   '${date.day}',
-                  style: TextStyle().copyWith(color: Colors.white, fontSize: 16.0),
+                  style:
+                      TextStyle().copyWith(color: Colors.white, fontSize: 16.0),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -228,7 +235,7 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
             return children;
           },
         ),
-        onDaySelected: (date, events) {
+        onDaySelected: (date, events, _) {
           _onDaySelected(date, events);
           _animationController.forward(from: 0.0);
         },
@@ -244,9 +251,11 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
         shape: BoxShape.circle,
         color: _calendarController.isSelected(date)
             ? Colors.deepOrange
-            : _calendarController.isToday(date) ? Colors.blue[200] : Colors.blueGrey[200],
+            : _calendarController.isToday(date)
+                ? Colors.blue[200]
+                : Colors.blueGrey[200],
       ),
-      margin: const EdgeInsets.fromLTRB(0,0,20,4),
+      margin: const EdgeInsets.fromLTRB(0, 0, 20, 4),
       alignment: Alignment.center,
       width: 18.0,
       height: 18.0,
@@ -265,31 +274,45 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
   Widget _buildButtons() {
     return Column(
       children: <Widget>[
+        SizedBox(height: 10),
         Row(
           mainAxisSize: MainAxisSize.max,
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            CupertinoButton(
-              child: Text('Today'),
-              onPressed: () {
-                _calendarController.setSelectedDay(DateTime.now(), runCallback: true);
-              },
+            Expanded(
+              child: CupertinoButton(
+                padding: EdgeInsets.all(0),
+                child: Text('Today'),
+                color: Colors.white70,
+                onPressed: () {
+                  _calendarController.setSelectedDay(DateTime.now(),
+                      runCallback: true);
+                },
+              ),
             ),
-            CupertinoButton(
-              child: Text('Week'),
-              onPressed: () {
-                setState(() {
-                  _calendarController.setCalendarFormat(CalendarFormat.week);
-                });
-              },
+            Expanded(
+              child: CupertinoButton(
+                padding: EdgeInsets.all(0),
+                child: Text('Week'),
+                color: Colors.white70,
+                onPressed: () {
+                  setState(() {
+                    _calendarController.setCalendarFormat(CalendarFormat.week);
+                  });
+                },
+              ),
             ),
-            CupertinoButton(
-              child: Text('Month'),
-              onPressed: () {
-                setState(() {
-                  _calendarController.setCalendarFormat(CalendarFormat.month);
-                });
-              },
+            Expanded(
+              child: CupertinoButton(
+                padding: EdgeInsets.all(0),
+                child: Text('Month'),
+                color: Colors.white70,
+                onPressed: () {
+                  setState(() {
+                    _calendarController.setCalendarFormat(CalendarFormat.month);
+                  });
+                },
+              ),
             ),
           ],
         ),
@@ -301,19 +324,24 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
     var user = Provider.of<FirebaseUser>(context);
     if (_selectedJobs == null || _selectedJobs.length == 0) {
       return Container(
+        padding: EdgeInsets.all(20),
         child: Text('No jobs currently scheduled for this day.'),
       );
     }
 
     return ListView(
+      padding: EdgeInsets.only(top: 4),
       shrinkWrap: true,
       children: _selectedJobs.map((job) {
         bool status = job.done;
         DateFormat dateFormat = DateFormat.jm();
         String _scheduled = dateFormat.format(job.scheduled);
         var jobPending = Icon(Icons.alarm, color: Colors.deepOrange[300]);
-        var jobDone = Icon(Icons.check_circle_outline, color: Colors.green[100]);
-        var doneColor = status ? TextStyle().copyWith(color: Colors.grey[350]) : TextStyle();
+        var jobDone =
+            Icon(Icons.check_circle_outline, color: Colors.green[100]);
+        var doneColor = status
+            ? TextStyle().copyWith(color: Colors.grey[350])
+            : TextStyle();
         return Dismissible(
           direction: DismissDirection.endToStart,
           key: Key(job.id),
@@ -327,49 +355,43 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   ListTile(
-                    leading: _buildLeading(_scheduled, status),
-                    title: Text(job.title.toUpperCase(),
-                      style: doneColor
-                    ),
-                    subtitle: Text(job.description, style: doneColor),
-                    trailing: status ? jobDone : jobPending,
-                    onTap: () {
-                      // setState(() {
-                      //   var $j = db.getJob(job.id);
-                      //   _streamController.addStream($j);
-                      // });
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(builder: (context) {
-                          // This is a bit of a hack to get around the fact that the job returned 
-                          // by the calendar widget isn't dynamically updated, even though the Calendar 
-                          // gets it's data from a StreamProvider. So we're manually taking the job ID
-                          // and returning a single job stream so that the JobDetails screen is dynamically 
-                          // updated after a save.
-                          return StreamBuilder(
-                            stream: db.getJob(job.id),
-                            builder: (context, snapshot) {
-                              var $job = snapshot.data;
-                              if (!snapshot.hasData) {
-                                return SizedBox(
-                                  height: 100.0,
-                                  width: 100.0,
-                                  child: Center(child: CircularProgressIndicator()),
-                                );
-                              }
-                              return JobDetails($job);
-                            });
-                        }),
-                      );
-                    }
-                  ),
+                      leading: _buildLeading(_scheduled, status),
+                      title: Text(job.title.toUpperCase(), style: doneColor),
+                      subtitle: Text(job.description, style: doneColor),
+                      trailing: status ? jobDone : jobPending,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (context) {
+                            // This is a bit of a hack to get around the fact that the job returned
+                            // by the calendar widget isn't dynamically updated, even though the Calendar
+                            // gets it's data from a StreamProvider. So we're manually taking the job ID
+                            // and returning a single job stream so that the JobDetails screen is dynamically
+                            // updated after a save.
+                            return StreamBuilder(
+                                stream: db.getJob(job.id),
+                                builder: (context, snapshot) {
+                                  var $job = snapshot.data;
+                                  if (!snapshot.hasData) {
+                                    return SizedBox(
+                                      height: 100.0,
+                                      width: 100.0,
+                                      child: Center(
+                                          child: CircularProgressIndicator()),
+                                    );
+                                  }
+                                  return JobDetails($job);
+                                });
+                          }),
+                        );
+                      }),
                 ],
               ),
             ),
           ),
           background: Container(
-            decoration: BoxDecoration(color: Colors.deepOrange[300]), 
+            decoration: BoxDecoration(color: Colors.deepOrange[300]),
             child: Align(
-              alignment: Alignment.centerRight, 
+              alignment: Alignment.centerRight,
               child: Icon(Icons.delete, color: Colors.white, size: 40),
             ),
           ),
@@ -380,17 +402,20 @@ class _CalendarState extends State<Calendar> with SingleTickerProviderStateMixin
 
   Widget _buildLeading(_scheduled, status) {
     return Container(
-      alignment: Alignment.center,
-      child: Text(_scheduled, style: status ? TextStyle().copyWith(color: Colors.grey[350]) : TextStyle(),),
-      height: 100,
-      width: 100,
-      padding: EdgeInsets.only(right: 10),
-      decoration:
-        BoxDecoration(
-          border: Border(
-            right: BorderSide(color: status ? Colors.deepOrange[100] : Colors.deepOrange)
-          )
-        )
-      );
+        alignment: Alignment.center,
+        child: Text(
+          _scheduled,
+          style: status
+              ? TextStyle().copyWith(color: Colors.grey[350])
+              : TextStyle(),
+        ),
+        height: 100,
+        width: 100,
+        padding: EdgeInsets.only(right: 10),
+        decoration: BoxDecoration(
+            border: Border(
+                right: BorderSide(
+                    color:
+                        status ? Colors.deepOrange[100] : Colors.deepOrange))));
   }
 }
