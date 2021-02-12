@@ -199,7 +199,7 @@ class _JobDetailsState extends State<JobDetails> {
                       CupertinoTheme.of(context).textTheme.navTitleTextStyle),
             );
           }
-          return Text($tech.firstName + $tech.lastName,
+          return Text($tech.firstName + ' ' + $tech.lastName,
               style: TextStyle(fontSize: 16));
         });
   }
